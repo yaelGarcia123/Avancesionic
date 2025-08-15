@@ -1,0 +1,7 @@
+{
+  "name": "proyecto1movilionic",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
