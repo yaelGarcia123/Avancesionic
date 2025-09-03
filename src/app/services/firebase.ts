@@ -2,7 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 
-import { getFirestore,setDoc,doc } from '@angular/fire/firestore';
+import {updateDoc,deleteDoc, getFirestore,setDoc,doc,getDoc,collection,collectionData,query } from '@angular/fire/firestore';
+import { deleteUser as firebaseDeleteUser } from "firebase/auth";
 
 import {
   getAuth,
@@ -47,6 +48,30 @@ getUser() {
 
   }
 
+//Obtener un documento 
+async getDocument(path: string) {
+  return (await getDoc(doc(getFirestore(), path))).data();
+}
+//obtener los documentos de una coleccion 
+getCollectionData(path:string,collectionQuery?:any){
+const ref=collection(getFirestore(), path)
+return collectionData(query(ref,collectionQuery))
+}
 
+updateDocument(path: string, data: any): Promise<void> {
+  return updateDoc(doc(getFirestore(), path), data);
+}
 
+deleteDocument(path: string): Promise<void> {
+  return deleteDoc(doc(getFirestore(), path));
+}
+
+// Para eliminar usuario de Authentication (requiere reautenticación)
+async deleteUser(): Promise<void> {
+  const user = getAuth().currentUser;
+  if (user) {
+    return firebaseDeleteUser(user); // ✅ usar alias de Firebase
+  }
+  throw new Error('No hay usuario autenticado');
+}
 }

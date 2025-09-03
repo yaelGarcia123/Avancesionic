@@ -36,8 +36,9 @@ export class Utils {
     return localStorage.setItem(key, JSON.stringify(value))
   }
 //obtiene un elemento desde el localstorage
-getFromLocalStorage(key: string){
-  return JSON.parse( localStorage.getItem(key))
-}
+  getFromLocalStorage(key: string): any {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : null;
+  }
 
 }
