@@ -17,6 +17,7 @@ export class AuthPage implements OnInit {
     password: new FormControl('', [Validators.required]),
   });
 
+  //injectamos los servicios 
   firebaseSvc = inject(Firebase);
   utilsSvc = inject(Utils);
 
@@ -27,8 +28,11 @@ export class AuthPage implements OnInit {
       const loading = await this.utilsSvc.loading();
       await loading.present();
 
+
       this.firebaseSvc.signIn(this.form.value as user)
         .then(res => {
+         this.utilsSvc.routerLink(`/main/home`);
+
           console.log("✅ Login exitoso:", res);
         })
         .catch(error => {
@@ -47,4 +51,5 @@ export class AuthPage implements OnInit {
         });
     }
   }
+ 
 }
