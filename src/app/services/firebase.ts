@@ -70,8 +70,10 @@ deleteDocument(path: string): Promise<void> {
 async deleteUser(): Promise<void> {
   const user = getAuth().currentUser;
   if (user) {
-    return firebaseDeleteUser(user); // ✅ usar alias de Firebase
+    return firebaseDeleteUser(user); 
   }
   throw new Error('No hay usuario autenticado');
 }
+
+
 }

@@ -1,36 +1,112 @@
 <app-header title="Inicio"></app-header>
 
 <ion-content>
-<ion-fab vertical="bottom" horizontal="end" slot="fixed">
-  <ion-fab-button>
-    <ion-icon name="add"></ion-icon>
-  </ion-fab-button>
-</ion-fab>
-<div class="user-profile">
-    <ion-card *ngIf="userData">
-      <ion-card-header>
-        <ion-card-title>Perfil de Usuario</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <ion-item>
-          <ion-label>Nombre:</ion-label>
-          <ion-text>{{ userData.nombre }}</ion-text>
-        </ion-item>
-        <ion-item>
-          <ion-label>Email:</ion-label>
-          <ion-text>{{ userData.email }}</ion-text>
-        </ion-item>
-        <ion-item>
-          <ion-label>UID:</ion-label>
-          <ion-text>{{ userData.uid }}</ion-text>
-        </ion-item>
-      </ion-card-content>
-    </ion-card>
+  <!-- Botón flotante para acciones -->
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="toggleEdit()">
+      <ion-icon [name]="isEditing ? 'close' : 'create'"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
 
+  <div class="user-crud-container">
+    <!-- Vista de visualización de datos -->
+    <div *ngIf="!isEditing && userData" class="user-profile">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Mi Perfil</ion-card-title>
+          <ion-card-subtitle>Información de tu cuenta</ion-card-subtitle>
+        </ion-card-header>
+
+        <ion-card-content>
+          <ion-list lines="none">
+            <ion-item>
+              <ion-icon name="person-outline" slot="start" color="primary"></ion-icon>
+              <ion-label>
+                <h3>Nombre</h3>
+                <p>{{ userData.nombre }}</p>
+              </ion-label>
+            </ion-item>
+
+            <ion-item>
+              <ion-icon name="mail-outline" slot="start" color="primary"></ion-icon>
+              <ion-label>
+                <h3>Email</h3>
+                <p>{{ userData.email }}</p>
+              </ion-label>
+            </ion-item>
+
+            <ion-item>
+              <ion-icon name="key-outline" slot="start" color="primary"></ion-icon>
+              <ion-label>
+                <h3>UID</h3>
+                <p>{{ userData.uid }}</p>
+              </ion-label>
+            </ion-item>
+          </ion-list>
+
+          <ion-button expand="block" color="primary" (click)="toggleEdit()">
+            <ion-icon slot="start" name="create-outline"></ion-icon>
+            Editar Perfil
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- Formulario de edición -->
+    <div *ngIf="isEditing && userData" class="edit-form">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Editar Perfil</ion-card-title>
+          <ion-card-subtitle>Actualiza tu información</ion-card-subtitle>
+        </ion-card-header>
+
+        <ion-card-content>
+          <form [formGroup]="userForm" (ngSubmit)="saveChanges()">
+            <ion-item>
+              <ion-label position="stacked">Nombre</ion-label>
+              <ion-input formControlName="nombre" type="text"></ion-input>
+            </ion-item>
+            <div class="error-message" *ngIf="userForm.get('nombre')?.hasError('required') && userForm.get('nombre')?.touched">
+              El nombre es requerido
+            </div>
+
+            <ion-item>
+              <ion-label position="stacked">Email</ion-label>
+              <ion-input formControlName="email" type="email" [readonly]="true"></ion-input>
+            </ion-item>
+            <ion-note color="medium">El email no se puede modificar</ion-note>
+
+            <ion-item>
+              <ion-label position="stacked">Nueva Contraseña (opcional)</ion-label>
+              <ion-input formControlName="password" type="password"></ion-input>
+            </ion-item>
+            <ion-note color="medium">Deja en blanco si no quieres cambiar la contraseña</ion-note>
+
+            <div class="form-buttons">
+              <ion-button expand="block" color="primary" type="submit" [disabled]="!userForm.valid">
+                <ion-icon slot="start" name="save-outline"></ion-icon>
+                Guardar Cambios
+              </ion-button>
+              
+              <ion-button expand="block" color="medium" fill="outline" (click)="cancelEdit()">
+                <ion-icon slot="start" name="close-outline"></ion-icon>
+                Cancelar
+              </ion-button>
+              
+              <ion-button expand="block" color="danger" fill="outline" (click)="confirmDelete()">
+                <ion-icon slot="start" name="trash-outline"></ion-icon>
+                Eliminar Cuenta
+              </ion-button>
+            </div>
+          </form>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- Loading state -->
     <div *ngIf="!userData" class="loading">
-      <ion-spinner></ion-spinner>
+      <ion-spinner name="crescent"></ion-spinner>
       <p>Cargando información del usuario...</p>
     </div>
   </div>
-
 </ion-content>
