@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
+import { ProfilePage } from './pages/main/profile/profile.page';
 
 const routes: Routes = [
   
@@ -16,6 +17,7 @@ const routes: Routes = [
     path: 'main',
     loadChildren: () => import('./pages/main/main.module').then( m => m.MainPageModule)
   },
+   { path: 'profile', component: ProfilePage },
 ];
 
 @NgModule({

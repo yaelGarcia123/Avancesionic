@@ -1,3 +1,97 @@
-.admin{
-    font-size: 13px;
+/* header.component.scss */
+
+ion-toolbar {
+  --background: var(--ion-color-primary);
+  --color: white;
+}
+
+
+  .admin {
+    font-size: 0.6rem;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    margin-top: 2px;
+  }
+
+
+#user-icon-button {
+  --color: white;
+  --background-hover: rgba(255, 255, 255, 0.1);
+}
+
+/* Panel de perfil desplegable */
+.profile-panel {
+  position: fixed;
+  top: -100%;
+  right: 0;
+  width: 85%;
+  max-width: 350px;
+  height: auto;
+  background: white;
+  z-index: 1000;
+  border-radius: 0 0 0 15px;
+  box-shadow: -5px 5px 15px rgba(0, 0, 0, 0.2);
+  transition: top 0.3s ease;
+  overflow: hidden;
+  
+  &.active {
+    top: 56px; /* Altura del header */
+  }
+}
+
+.profile-content {
+  padding: 0;
+  
+  ion-card {
+    margin: 0;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  
+  ion-card-header {
+    padding-bottom: 5px;
+  }
+  
+  ion-card-content {
+    padding-top: 5px;
+  }
+}
+
+/* Fondo semitransparente */
+.profile-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  
+  &.active {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* Estilos para modo iOS */
+.ios {
+  .profile-panel {
+    top: -100%;
+    
+    &.active {
+      top: 44px; /* Altura del header en iOS */
+    }
+  }
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .profile-panel {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+  }
 }

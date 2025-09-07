@@ -2,8 +2,18 @@ import { inject, Injectable } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 
-import {updateDoc,deleteDoc, getFirestore,setDoc,doc,getDoc,collection,collectionData,query } from '@angular/fire/firestore';
-import { deleteUser as firebaseDeleteUser } from "firebase/auth";
+import {
+  updateDoc,
+  deleteDoc,
+  getFirestore,
+  setDoc,
+  doc,
+  getDoc,
+  collection,
+  collectionData,
+  query,
+} from '@angular/fire/firestore';
+import { deleteUser as firebaseDeleteUser } from 'firebase/auth';
 
 import {
   getAuth,
@@ -11,21 +21,24 @@ import {
   signOut,
   createUserWithEmailAndPassword,
   updateProfile,
-  updateCurrentUser,
+  updateEmail as fbUpdateEmail,
+  updatePassword as fbUpdatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  User,
 } from 'firebase/auth';
 import { user } from '../models/user.model';
 
 @Injectable({
-  
   providedIn: 'root',
 })
 export class Firebase {
   private auth = inject(AngularFireAuth);
-  firestone=inject(AngularFirestore)
+  firestone = inject(AngularFirestore);
 
-getUser() {
-  return this.auth.currentUser;
-}
+  getUser() {
+    return this.auth.currentUser;
+  }
 
   //  función para acceder
   signIn(user: user) {
@@ -37,43 +50,73 @@ getUser() {
     return createUserWithEmailAndPassword(getAuth(), user.email, user.password);
   }
 
-  //  función para cerrar sesión
+  //  función para actualizar perfil
   updateUser(displayName: string) {
     return updateProfile(getAuth().currentUser, { displayName });
   }
 
-    //  Base de datos
-  setDocument(path:string ,data:any){
-  return setDoc(doc(getFirestore(), path),data)
+  // Reautenticar al usuario
+  async reauthenticateUser(email: string, password: string): Promise<void> {
+    const user = getAuth().currentUser;
+    if (!user) throw new Error('No hay usuario autenticado');
 
+    const credential = EmailAuthProvider.credential(email, password);
+    await reauthenticateWithCredential(user, credential);
   }
 
-//Obtener un documento 
-async getDocument(path: string) {
-  return (await getDoc(doc(getFirestore(), path))).data();
-}
-//obtener los documentos de una coleccion 
-getCollectionData(path:string,collectionQuery?:any){
-const ref=collection(getFirestore(), path)
-return collectionData(query(ref,collectionQuery))
-}
+  //  Operaciones de firebase (Base de datos)
 
-updateDocument(path: string, data: any): Promise<void> {
-  return updateDoc(doc(getFirestore(), path), data);
-}
-
-deleteDocument(path: string): Promise<void> {
-  return deleteDoc(doc(getFirestore(), path));
-}
-
-// Para eliminar usuario de Authentication (requiere reautenticación)
-async deleteUser(): Promise<void> {
-  const user = getAuth().currentUser;
-  if (user) {
-    return firebaseDeleteUser(user); 
+  //crear /actualizar documento
+  setDocument(path: string, data: any) {
+    return setDoc(doc(getFirestore(), path), data);
   }
-  throw new Error('No hay usuario autenticado');
-}
+  //leer el documento
+  async getDocument(path: string) {
+    return (await getDoc(doc(getFirestore(), path))).data();
+  }
+  //Obtener todos los documentos de una colección, opcionalmente con filtros u ordenamiento.
+  getCollectionData(path: string, collectionQuery?: any) {
+    const ref = collection(getFirestore(), path);
+    return collectionData(query(ref, collectionQuery));
+  }
+  //Actualizar campos específicos de un documento existente sin reemplazarlo completamente.
+  updateDocument(path: string, data: any): Promise<void> {
+    return updateDoc(doc(getFirestore(), path), data);
+  }
+  //Eliminar permanentemente un documento de Firestore.
+
+  deleteDocument(path: string): Promise<void> {
+    return deleteDoc(doc(getFirestore(), path));
+  }
 
 
+
+  // Para eliminar usuario de Authentication
+  async deleteUser(): Promise<void> {
+    const user = getAuth().currentUser;
+    if (user) {
+      return firebaseDeleteUser(user);
+    }
+    throw new Error('No hay usuario autenticado');
+  }
+
+  // 🔹 Cambiar email (requiere reautenticación previa)
+  async updateEmail(newEmail: string): Promise<void> {
+    const user = getAuth().currentUser;
+    if (user) {
+      return fbUpdateEmail(user, newEmail);
+    }
+    throw new Error('No hay usuario autenticado');
+  }
+
+  // 🔹 Cambiar contraseña (requiere reautenticación previa)
+  async updatePassword(newPassword: string): Promise<void> {
+    const user = getAuth().currentUser;
+    if (user) {
+      return fbUpdatePassword(user, newPassword);
+    }
+    throw new Error('No hay usuario autenticado');
+  }
+
+  
 }
