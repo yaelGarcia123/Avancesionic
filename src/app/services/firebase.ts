@@ -12,6 +12,8 @@ import {
   collection,
   collectionData,
   query,
+  getDocs,
+  where,
 } from '@angular/fire/firestore';
 import { deleteUser as firebaseDeleteUser } from 'firebase/auth';
 
@@ -35,6 +37,11 @@ import { user } from '../models/user.model';
 export class Firebase {
   private auth = inject(AngularFireAuth);
   firestone = inject(AngularFirestore);
+
+
+getAuth(){
+  return getAuth();
+}
 
   getUser() {
     return this.auth.currentUser;
@@ -118,5 +125,19 @@ export class Firebase {
     throw new Error('No hay usuario autenticado');
   }
 
-  
+async getDocumentsByUserRef(collectionName: string) {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('No hay usuario autenticado');
+    }
+
+    const userRef = doc(getFirestore(), 'users', user.uid); // Ajusta 'users' si tu colección de usuarios tiene otro nombre
+    const q = query(
+      collection(getFirestore(), collectionName),
+      where('user.ref', '==', userRef)
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => doc.data());
+  }  
 }
