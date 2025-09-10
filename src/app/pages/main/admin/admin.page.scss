@@ -1,0 +1,17 @@
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  justify-content: center;
+}
+.house-item {
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+}
+
+ion-item-option {
+  width: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

@@ -1,19 +1,23 @@
 import { inject, Injectable } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-
+import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
+import { provideFirestore } from '@angular/fire/firestore';
+import { environment } from '../../environments/environment';
 import {
   updateDoc,
   deleteDoc,
   getFirestore,
   setDoc,
   doc,
+  addDoc,
   getDoc,
   collection,
   collectionData,
   query,
   getDocs,
   where,
+  Firestore,
 } from '@angular/fire/firestore';
 import { deleteUser as firebaseDeleteUser } from 'firebase/auth';
 
@@ -30,11 +34,15 @@ import {
   User,
 } from 'firebase/auth';
 import { user } from '../models/user.model';
+import { Observable } from 'rxjs';
+
 
 @Injectable({
   providedIn: 'root',
 })
 export class Firebase {
+    
+
   private auth = inject(AngularFireAuth);
   firestone = inject(AngularFirestore);
 
@@ -146,4 +154,30 @@ async getDocumentsByUserRef(collectionName: string) {
     };
   });
 }
+
+// En tu servicio Firebase (firebase.ts)
+async getAllUsers() {
+  const usersRef = collection(getFirestore(), 'users');
+  const querySnapshot = await getDocs(usersRef);
+  return querySnapshot.docs; // Devuelve los documentos, no el snapshot
+}
+
+async getHousesByUserId(userId: string) {
+  const userRef = doc(getFirestore(), 'users', userId);
+  const q = query(
+    collection(getFirestore(), 'places'),
+    where('user.ref', '==', userRef)
+  );
+  
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => {
+    return {
+      id: doc.id,
+      ...doc.data()
+    };
+  });
+}
+
+
+
 }
