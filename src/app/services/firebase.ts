@@ -126,18 +126,24 @@ getAuth(){
   }
 
 async getDocumentsByUserRef(collectionName: string) {
-    const auth = getAuth();
-    const user = auth.currentUser;
-    if (!user) {
-      throw new Error('No hay usuario autenticado');
-    }
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('No hay usuario autenticado');
+  }
 
-    const userRef = doc(getFirestore(), 'users', user.uid); // Ajusta 'users' si tu colección de usuarios tiene otro nombre
-    const q = query(
-      collection(getFirestore(), collectionName),
-      where('user.ref', '==', userRef)
-    );
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => doc.data());
-  }  
+  const userRef = doc(getFirestore(), 'users', user.uid);
+  const q = query(
+    collection(getFirestore(), collectionName),
+    where('user.ref', '==', userRef)
+  );
+  
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => {
+    return {
+      id: doc.id,
+      ...doc.data()
+    };
+  });
+}
 }

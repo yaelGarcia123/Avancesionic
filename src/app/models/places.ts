@@ -3,5 +3,7 @@
 export interface Place {
   id?: string;
   number: string;
-  ref: string;
-}
+  user: {
+    name: string;
+    ref: any; // DocumentReference
+  }}

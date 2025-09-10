@@ -1,8 +1,41 @@
 <app-header title="Inicio"></app-header>
 
 <ion-content>
-  <!-- Contenido principal de tu home -->
   <div class="main-content">
     
+    <!-- Mostrar loading mientras carga -->
+    <div *ngIf="!places" class="loading">
+      <ion-spinner></ion-spinner>
+      <p>Cargando lugares...</p>
+    </div>
+
+    <!-- Mostrar mensaje si no hay casas -->
+    <div *ngIf="places && places.length === 0" class="empty-state">
+      <ion-icon name="home-outline" size="large"></ion-icon>
+      <h3>No tienes casas registradas</h3>
+      <p>Agrega tu primera casa para comenzar</p>
+      <ion-button routerLink="/add-place">
+        Agregar Casa
+      </ion-button>
+    </div>
+
+    <!-- Lista de casas -->
+    <div *ngIf="places && places.length > 0">
+      <h2>Mis Casas</h2>
+      
+      <ion-list>
+        <ion-item *ngFor="let place of places" [routerLink]="['/place-detail', place.id]">
+          <ion-icon name="home" slot="start"></ion-icon>
+          <ion-label>
+            <h3>{{ place.number }}</h3>
+            <p>Propietario: {{ place.user?.name }}</p>
+          </ion-label>
+          <ion-badge slot="end" color="primary">
+            Ver detalles
+          </ion-badge>
+        </ion-item>
+      </ion-list>
+    </div>
+
   </div>
 </ion-content>
