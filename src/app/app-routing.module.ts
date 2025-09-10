@@ -17,7 +17,9 @@ const routes: Routes = [
     path: 'main',
     loadChildren: () => import('./pages/main/main.module').then( m => m.MainPageModule)
   },
-   { path: 'profile', component: ProfilePage },
+   { path: 'profile', 
+    loadChildren: () => import('./pages/main/profile/profile.module').then( m => m.ProfilePageModule)
+   },
 ];
 
 @NgModule({

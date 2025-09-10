@@ -2,6 +2,6 @@
 
 export interface Place {
   id?: string;
-  name: string;
+  number: string;
   ref: string;
 }
