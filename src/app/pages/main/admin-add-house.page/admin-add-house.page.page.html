@@ -1,0 +1,40 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Agregar Casa</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">
+        <ion-icon slot="icon-only" name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-item>
+    <ion-label position="stacked">Número de la casa</ion-label>
+    <ion-input [(ngModel)]="newHouse.number"></ion-input>
+  </ion-item>
+
+  <ion-list>
+    <ion-radio-group [(ngModel)]="newHouse.userId">
+      <ion-list-header>
+        <ion-label>Asignar a usuario</ion-label>
+      </ion-list-header>
+
+      <ion-item *ngFor="let user of allUsers">
+        <ion-label>{{ user.name }} ({{ user.email }})</ion-label>
+        <ion-radio slot="start" [value]="user.id"></ion-radio>
+      </ion-item>
+    </ion-radio-group>
+  </ion-list>
+
+  <ion-item lines="none">
+    <ion-label>Casa activa</ion-label>
+    <ion-toggle [(ngModel)]="newHouse.activado"></ion-toggle>
+  </ion-item>
+
+  <ion-button expand="block" color="success" (click)="save()">
+    <ion-icon slot="start" name="checkmark"></ion-icon>
+    Guardar
+  </ion-button>
+</ion-content>

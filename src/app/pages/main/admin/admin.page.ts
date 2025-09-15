@@ -1,7 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AlertController, LoadingController } from '@ionic/angular';
+import { AlertController, LoadingController, ModalController } from '@ionic/angular';
 import { Firebase } from 'src/app/services/firebase';
+import { AdminEditPage } from '../admin-edit/admin-edit.page';
+import { doc, getFirestore } from 'firebase/firestore';
+import { Utils } from 'src/app/services/utils';
+import { AdminAddHousePagePage } from '../admin-add-house.page/admin-add-house.page.page';
 
 @Component({
   selector: 'app-admin',
@@ -20,10 +24,14 @@ export class AdminPage implements OnInit {
   activeHouses: number = 0;
 
   constructor(
+      private modalCtrl: ModalController,
+
     private router: Router,
     private firebaseService: Firebase,
     private alertController: AlertController,
-    private loadingController: LoadingController
+    private loadingController: LoadingController,
+      private utils: Utils // <--- agregar aquí
+
   ) { }
 
   ngOnInit() {
@@ -126,7 +134,7 @@ export class AdminPage implements OnInit {
       return user;
     });
   }
-  async exportData() {
+  /*async exportData() {
     // Aquí implementarías la lógica para exportar datos
     const alert = await this.alertController.create({
       header: 'Exportar Datos',
@@ -152,9 +160,9 @@ export class AdminPage implements OnInit {
     });
 
     await alert.present();
-  }
+  }*/
 
-  exportToCSV() {
+  /*exportToCSV() {
     // Lógica para exportar a CSV
     console.log('Exportando a CSV');
     this.presentAlert('Éxito', 'Datos exportados correctamente en formato CSV');
@@ -165,7 +173,7 @@ export class AdminPage implements OnInit {
     console.log('Exportando a JSON');
     this.presentAlert('Éxito', 'Datos exportados correctamente en formato JSON');
   }
-
+*/
   async presentAlert(header: string, message: string) {
     const alert = await this.alertController.create({
       header,
@@ -176,7 +184,70 @@ export class AdminPage implements OnInit {
     await alert.present();
   }
 
+async openEditHouse(house: any, userId: string) {
+  const modal = await this.modalCtrl.create({
+    component: AdminEditPage,
+    componentProps: { house: { ...house } }, // copiamos para no mutar directo
+  });
 
+  modal.onDidDismiss().then(async (result) => {
+    if (result.data) {
+      const updatedHouse = result.data;
+
+      // 🔹 Guardar cambios en Firebase
+      await this.firebaseService.updateDocument(
+        `places/${updatedHouse.id}`,
+        {
+          number: updatedHouse.number,
+          activado: updatedHouse.activado,
+        }
+      );
+
+      // 🔹 Actualizar la lista local
+      const user = this.allUsers.find(u => u.id === userId);
+      if (user) {
+        const idx = user.houses.findIndex((h: any) => h.id === updatedHouse.id);
+        if (idx > -1) {
+          user.houses[idx] = updatedHouse;
+        }
+      }
+    }
+  });
+
+  return await modal.present();
+}
+
+async addHouse() {
+  const modal = await this.modalCtrl.create({
+    component: AdminAddHousePagePage,
+    componentProps: { allUsers: this.allUsers }
+  });
+
+  modal.onDidDismiss().then(async (result) => {
+    if (result.data) {
+      const newHouse = result.data;
+
+      // Guardar en Firebase
+      await this.firebaseService.setDocument(
+        `places/${this.firebaseService.firestone.createId()}`, // 🔹 ojo: firestore, no firestone
+        {
+          number: newHouse.number,
+          activado: newHouse.activado,
+          createdAt: new Date(),
+          user: {
+            ref: doc(getFirestore(), 'users', newHouse.userId),
+            name: this.allUsers.find(u => u.id === newHouse.userId)?.name
+          }
+        }
+      );
+
+      this.utils.presentToast({ message: 'Casa agregada correctamente', color: 'success' });
+      this.loadAllData();
+    }
+  });
+
+  return await modal.present();
+}
 
 
   navigateToProfile() {

@@ -178,6 +178,20 @@ async getHousesByUserId(userId: string) {
   });
 }
 
+async addHouseToUser(userId: string, number: string) {
+  const userRef = doc(getFirestore(), 'users', userId);
+
+  const newHouse = {
+    number,
+    activado: true,
+    createdAt: new Date(),
+    user: {
+      ref: userRef, // referencia al usuario en Firebase
+    },
+  };
+
+  return await addDoc(collection(getFirestore(), 'places'), newHouse);
+}
 
 
 }

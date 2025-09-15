@@ -10,10 +10,19 @@
         Actualizar Datos
       </ion-button>
       
-      <ion-button class="action-btn"  color="success" (click)="exportData()">
+      <ion-button class="action-btn"  color="success">
         <ion-icon name="download" slot="start"></ion-icon>
         Exportar Datos
       </ion-button>
+
+
+       <ion-button class="action-btn" color="primary" (click)="addHouse()">
+  <ion-icon name="home" slot="start"></ion-icon>
+  places
+</ion-button>
+
+
+
     </div>
 
     <!-- Buscador -->
@@ -89,7 +98,7 @@
       <ion-label>
         <h3>{{ house.number }}</h3>
         <p>Estado: {{ house.activado ? 'Activo' : 'Inactivo' }}</p>
-        <p>Registrado: {{ house.createdAt | date:'mediumDate' }}</p>
+       
       </ion-label>
       <ion-badge [color]="house.activado ? 'success' : 'medium'" slot="end">
         {{ house.activado ? 'Activa' : 'Inactiva' }}
@@ -97,9 +106,10 @@
     </ion-item>
     
     <ion-item-options side="end">
-      <ion-item-option color="primary">
-        <ion-icon slot="icon-only" name="create"></ion-icon>
-      </ion-item-option>
+      <ion-item-option color="primary" (click)="openEditHouse(house, user.id)">
+  <ion-icon slot="icon-only" name="create"></ion-icon>
+</ion-item-option>
+
       <ion-item-option color="danger" >
         <ion-icon slot="icon-only" name="trash"></ion-icon>
       </ion-item-option>

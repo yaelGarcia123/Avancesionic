@@ -18,6 +18,14 @@ const routes: Routes = [
   {
     path: 'admin',
     loadChildren: () => import('./admin/admin.module').then( m => m.AdminPageModule)
+  },
+  {
+    path: 'admin-edit',
+    loadChildren: () => import('./admin-edit/admin-edit.module').then( m => m.AdminEditPageModule)
+  },
+  {
+    path: 'admin-add-house.page',
+    loadChildren: () => import('./admin-add-house.page/admin-add-house.page.module').then( m => m.AdminAddHousePagePageModule)
   }
 
 ];
