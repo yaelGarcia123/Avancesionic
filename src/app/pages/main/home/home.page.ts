@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { Place } from 'src/app/models/places';
 import { Firebase } from 'src/app/services/firebase';
 import { Utils } from 'src/app/services/utils';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 @Component({
   selector: 'app-home',
@@ -21,7 +22,16 @@ export class HomePage implements OnInit {
   constructor() { }
 
   ngOnInit() {
-    this.loadPlaces();
+    const auth = getAuth();
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        this.loadPlaces();
+      } else {
+        this.loading = false;
+        this.error = 'No hay usuario autenticado';
+      }
+    });
   }
 
   async loadPlaces() {
@@ -37,7 +47,6 @@ export class HomePage implements OnInit {
       console.error('Error al cargar lugares:', error);
       this.error = 'Error al cargar las casas. Intenta nuevamente.';
       
-      // Mostrar toast de error
       this.utilsSvc.presentToast({
         message: this.error,
         duration: 3000,
@@ -48,7 +57,6 @@ export class HomePage implements OnInit {
     }
   }
 
-  // Método para recargar
   handleRefresh(event: any) {
     this.loadPlaces().then(() => {
       event.target.complete();
