@@ -94,14 +94,14 @@
          <div *ngIf="user.showHouses">
   <ion-item-sliding *ngFor="let house of user.houses" class="house-item">
     <ion-item>
-      <ion-icon name="home" slot="start" [color]="house.activado ? 'success' : 'medium'"></ion-icon>
+      <ion-icon name="home" slot="start" [color]="house.active ? 'success' : 'medium'"></ion-icon>
       <ion-label>
         <h3>{{ house.number }}</h3>
-        <p>Estado: {{ house.activado ? 'Activo' : 'Inactivo' }}</p>
+        <p>Estado: {{ house.active ? 'Activo' : 'Inactivo' }}</p>
        
       </ion-label>
-      <ion-badge [color]="house.activado ? 'success' : 'medium'" slot="end">
-        {{ house.activado ? 'Activa' : 'Inactiva' }}
+      <ion-badge [color]="house.active ? 'success' : 'medium'" slot="end">
+        {{ house.active ? 'Activa' : 'Inactiva' }}
       </ion-badge>
     </ion-item>
     

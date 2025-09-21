@@ -10,26 +10,39 @@ import { ModalController } from '@ionic/angular';
 export class AdminAddHousePagePage implements OnInit {
 
   @Input() allUsers: any[] = []; // recibimos los usuarios desde AdminPage
+  filteredUsers: any[] = []; // lista filtrada de usuarios
+  searchTerm: string = '';
 
-  newHouse = { //definimos un objeto para la nueva casa
+  newHouse = { // definimos un objeto para la nueva casa
     number: '',
     userId: '',
-    activado: true
+    active: true
   };
 
+  constructor(private modalCtrl: ModalController) {}
 
   ngOnInit() {
+    // inicializar con todos los usuarios
+    this.filteredUsers = [...this.allUsers];
   }
-  constructor(private modalCtrl: ModalController) {}
 
   dismiss() {
     this.modalCtrl.dismiss();
   }
 
-  save() {//Valida que el número de casa y el usuario estén seleccionados.
-    if (!this.newHouse.number || !this.newHouse.userId) { //
+  save() {
+    // Valida que el número de casa y el usuario estén seleccionados.
+    if (!this.newHouse.number || !this.newHouse.userId) {
       return;
     }
     this.modalCtrl.dismiss(this.newHouse);
+  }
+
+  filterUsers() {
+    const term = this.searchTerm.toLowerCase();
+    this.filteredUsers = this.allUsers.filter(user =>
+      user.name.toLowerCase().includes(term) ||
+      user.email.toLowerCase().includes(term)
+    );
   }
 }

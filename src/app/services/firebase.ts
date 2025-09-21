@@ -166,14 +166,14 @@ async getHousesByUserId(userId: string) {
   const userRef = doc(getFirestore(), 'users', userId);
   const q = query(
     collection(getFirestore(), 'places'),
-    where('user.ref', '==', userRef)
+    where('user.ref', '==', userRef)//filtra los documentos de places donde el campo user.ref sea igual a la referencia del usuario que obtuvimos arriba.
   );
   
-  const querySnapshot = await getDocs(q);
+  const querySnapshot = await getDocs(q);// Ejecuta la consulta y obtiene los documentos que coinciden con el filtro.
   return querySnapshot.docs.map(doc => {
     return {
       id: doc.id,
-      ...doc.data()
+      ...doc.data()//metes todas las propiedades del documento al objeto final.
     };
   });
 }
@@ -183,7 +183,7 @@ async addHouseToUser(userId: string, number: string) {
 
   const newHouse = {
     number,
-    activado: true,
+    active: true,
     createdAt: new Date(),
     user: {
       ref: userRef, // referencia al usuario en Firebase

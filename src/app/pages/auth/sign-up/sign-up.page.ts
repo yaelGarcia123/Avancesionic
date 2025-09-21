@@ -16,7 +16,7 @@ export class SignUpPage implements OnInit {
     uid: new FormControl(''),
     email: new FormControl('', [Validators.required, Validators.email]),
     password: new FormControl('', [Validators.required]),
-    nombre: new FormControl('', [Validators.required, Validators.minLength(4)]),
+    name: new FormControl('', [Validators.required, Validators.minLength(4)]),
   });
 
   firebaseSvc = inject(Firebase);
@@ -38,7 +38,7 @@ export class SignUpPage implements OnInit {
       this.form.controls.uid.setValue(res.user.uid);
 
       // Actualizar displayName en Firebase
-      await this.firebaseSvc.updateUser(this.form.value.nombre);
+      await this.firebaseSvc.updateUser(this.form.value.name);
 
       // Guardar en Firestore
       await this.setUserInfo(res.user.uid);

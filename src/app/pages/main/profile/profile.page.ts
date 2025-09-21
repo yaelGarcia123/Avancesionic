@@ -22,7 +22,7 @@ export class ProfilePage implements OnInit {
     private alertController: AlertController
   ) {
     this.userForm = this.fb.group({
-      nombre: ['', Validators.required],
+      name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       currentPassword: ['', Validators.required],
       password: [''], // nueva contraseña (opcional)
@@ -37,7 +37,7 @@ export class ProfilePage implements OnInit {
     this.userData = await this.utilsSvc.getFromLocalStorage('users');
     if (this.userData) {
       this.userForm.patchValue({
-        nombre: this.userData.nombre,
+        name: this.userData.name,
         email: this.userData.email,
       });
     }
@@ -50,7 +50,7 @@ export class ProfilePage implements OnInit {
   cancelEdit() {
     this.isEditing = false;
     this.userForm.reset({
-      nombre: this.userData?.nombre,
+      name: this.userData?.name,
       email: this.userData?.email,
     });
   }
@@ -69,8 +69,8 @@ export class ProfilePage implements OnInit {
         this.userData.email,
         this.userForm.value.currentPassword
       );
-
-      const updatedData: any = { nombre: this.userForm.value.nombre };
+      
+      const updatedData: any = { name: this.userForm.value.name };
 
       if (this.userForm.value.email !== this.userData.email) {
         await this.firebaseSvc.updateEmail(this.userForm.value.email);

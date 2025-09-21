@@ -53,10 +53,10 @@ export class AdminPage implements OnInit {
       this.activeHouses = 0;
 
       for (const userDoc of usersDocs) {
-        const userData: any = userDoc.data();
-        const user = {
+        const userData: any = userDoc.data();//.data() → extrae los datos del documento en forma de objeto normal de JavaScript.
+        const user = {//objeto user 
           id: userDoc.id,
-          name: userData.nombre || 'Sin nombre',
+          name: userData.name || 'Sin nombre',
           email: userData.email || 'Sin email',
           active: userData.active !== false,
           houses: [],
@@ -67,11 +67,11 @@ export class AdminPage implements OnInit {
         const userHouses = await this.firebaseService.getHousesByUserId(userDoc.id);
         user.houses = userHouses.map((house: any) => {
           this.totalHouses++;
-          if (house.activado) this.activeHouses++;
+          if (house.active) this.activeHouses++;
           return {
             id: house.id,
             number: house.number,
-            activado: house.activado,
+            active: house.active,
             createdAt: house.createdAt || new Date()
           };
         });
@@ -90,10 +90,10 @@ export class AdminPage implements OnInit {
   }
 
   filterData() {
-    if (!this.searchTerm) {
+    if (this.searchTerm.length == 0) {
       this.filteredUsers = this.allUsers.map(user => ({
         ...user,
-        showHouses: false // Ocultar casas cuando no hay búsqueda
+        
       }));
       return;
     }
@@ -199,7 +199,7 @@ async openEditHouse(house: any, userId: string) {
         `places/${updatedHouse.id}`,
         {
           number: updatedHouse.number,
-          activado: updatedHouse.activado,
+          active: updatedHouse.active,
         }
       );
 
@@ -232,7 +232,7 @@ async addHouse() {
         `places/${this.firebaseService.firestone.createId()}`, // 🔹 ojo: firestore, no firestone
         {
           number: newHouse.number,
-          activado: newHouse.activado,
+          active: newHouse.active,
           createdAt: new Date(),
           user: {
             ref: doc(getFirestore(), 'users', newHouse.userId),

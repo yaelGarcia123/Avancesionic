@@ -30,10 +30,10 @@
             <h3>{{ place.number }}</h3>
             <p>Propietario: {{ place.user?.name }}</p>
           </ion-label>
-          <ion-badge *ngIf="place.activado" slot="end" color="success">
+          <ion-badge *ngIf="place.active" slot="end" color="success">
             Activo
           </ion-badge>
-          <ion-badge *ngIf="!place.activado" slot="end" color="danger">
+          <ion-badge *ngIf="!place.active" slot="end" color="danger">
             Inactivo
           </ion-badge>
         </ion-item>

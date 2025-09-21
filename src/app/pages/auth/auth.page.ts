@@ -59,7 +59,7 @@ export class AuthPage implements OnInit {
       if (completeUser.admin) {
         this.utilsSvc.routerLink('/main/admin');
         this.utilsSvc.presentToast({
-          message: `Bienvenido Administrador ${completeUser['nombre']}`,
+          message: `Bienvenido Administrador ${completeUser['name']}`,
           duration: 1500,
           color: 'success',
           position: 'middle',
@@ -68,7 +68,7 @@ export class AuthPage implements OnInit {
       } else {
         this.utilsSvc.routerLink('/main/home');
         this.utilsSvc.presentToast({
-          message: `Te damos la bienvenida ${completeUser['nombre']}`,
+          message: `Te damos la bienvenida ${completeUser['name']}`,
           duration: 1500,
           color: 'primary',
           position: 'middle',

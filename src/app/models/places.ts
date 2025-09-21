@@ -3,7 +3,7 @@
 export interface Place {
   id?: string;
   number: string;
-  activado:boolean;
+  active:boolean;
   user: {
     name: string;
     ref: any; // DocumentReference
