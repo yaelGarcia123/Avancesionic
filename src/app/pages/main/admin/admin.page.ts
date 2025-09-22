@@ -6,7 +6,7 @@ import { AdminEditPage } from '../admin-edit/admin-edit.page';
 import { doc, getFirestore } from 'firebase/firestore';
 import { Utils } from 'src/app/services/utils';
 import { AdminAddHousePagePage } from '../admin-add-house.page/admin-add-house.page.page';
-import { HomeownerPivot } from 'src/app/models/HomeownerPivot';
+import { HouseResident } from 'src/app/models/HouseResident';
 
 @Component({
   selector: 'app-admin',
@@ -94,24 +94,24 @@ export class AdminPage implements OnInit {
   const db = getFirestore();
 
   for (const user of this.allUsers) {
-  const pivotData: HomeownerPivot = {
-  userId: user.id,
-  name: user.name,
-  email: user.email,
-  totalHouses: user.houses.length,
-  activeHouses: user.houses.filter(h => h.active).length,
-  houses: user.houses.map(h => ({
-    number: h.number,
-    active: h.active,
-    createdAt: h.createdAt
-  }))
-};
+    for (const house of user.houses) {
+      const pivotData: HouseResident = {
+        userRef: doc(db, `users/${user.id}`),
+        houseRef: doc(db, `houses/${house.id}`), // ahora guardamos la referencia a la casa
+        role: "propietario", // o residente según tu lógica
+        createdAt: new Date()
+      };
+
+      // 🔹 Guardar en colección pivote
+      await this.firebaseService.setDocument(
+        `homeowners/${user.id}_${house.id}`, // ID único combinando user+house
+        pivotData
+      );
+    }
+
 
     // Guardar en la colección "homeowner" con ID = userId
-    await this.firebaseService.setDocument(
-      `homeowners/${user.id}`,
-      pivotData
-    );
+
   }
 }
 
@@ -161,46 +161,7 @@ export class AdminPage implements OnInit {
       return user;
     });
   }
-  /*async exportData() {
-    // Aquí implementarías la lógica para exportar datos
-    const alert = await this.alertController.create({
-      header: 'Exportar Datos',
-      message: '¿Qué formato prefieres para exportar?',
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel'
-        },
-        {
-          text: 'CSV',
-          handler: () => {
-            this.exportToCSV();
-          }
-        },
-        {
-          text: 'JSON',
-          handler: () => {
-            this.exportToJSON();
-          }
-        }
-      ]
-    });
-
-    await alert.present();
-  }*/
-
-  /*exportToCSV() {
-    // Lógica para exportar a CSV
-    console.log('Exportando a CSV');
-    this.presentAlert('Éxito', 'Datos exportados correctamente en formato CSV');
-  }
-
-  exportToJSON() {
-    // Lógica para exportar a JSON
-    console.log('Exportando a JSON');
-    this.presentAlert('Éxito', 'Datos exportados correctamente en formato JSON');
-  }
-*/
+  
   async presentAlert(header: string, message: string) {
     const alert = await this.alertController.create({
       header,
