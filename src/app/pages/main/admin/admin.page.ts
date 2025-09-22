@@ -6,6 +6,7 @@ import { AdminEditPage } from '../admin-edit/admin-edit.page';
 import { doc, getFirestore } from 'firebase/firestore';
 import { Utils } from 'src/app/services/utils';
 import { AdminAddHousePagePage } from '../admin-add-house.page/admin-add-house.page.page';
+import { HomeownerPivot } from 'src/app/models/HomeownerPivot';
 
 @Component({
   selector: 'app-admin',
@@ -36,6 +37,7 @@ export class AdminPage implements OnInit {
 
   ngOnInit() {
     this.loadAllData();
+    
   }
 
   async loadAllData() {
@@ -88,6 +90,31 @@ export class AdminPage implements OnInit {
       await loading.dismiss();
     }
   }
+  async updatePivotTable() {
+  const db = getFirestore();
+
+  for (const user of this.allUsers) {
+  const pivotData: HomeownerPivot = {
+  userId: user.id,
+  name: user.name,
+  email: user.email,
+  totalHouses: user.houses.length,
+  activeHouses: user.houses.filter(h => h.active).length,
+  houses: user.houses.map(h => ({
+    number: h.number,
+    active: h.active,
+    createdAt: h.createdAt
+  }))
+};
+
+    // Guardar en la colección "homeowner" con ID = userId
+    await this.firebaseService.setDocument(
+      `homeowners/${user.id}`,
+      pivotData
+    );
+  }
+}
+
 
   filterData() {
     if (this.searchTerm.length == 0) {
@@ -194,7 +221,7 @@ async openEditHouse(house: any, userId: string) {
     if (result.data) {
       const updatedHouse = result.data;
 
-      // 🔹 Guardar cambios en Firebase
+      //Guardar cambios en Firebase
       await this.firebaseService.updateDocument(
         `places/${updatedHouse.id}`,
         {
@@ -211,6 +238,7 @@ async openEditHouse(house: any, userId: string) {
           user.houses[idx] = updatedHouse;
         }
       }
+      await this.updatePivotTable();
     }
   });
 
@@ -240,8 +268,22 @@ async addHouse() {
           }
         }
       );
+// Buscar el usuario al que se asignó la casa
+const user = this.allUsers.find(u => u.id === newHouse.userId);
+if (user) {
+  user.houses.push({
+    id: this.firebaseService.firestone.createId(), // o el ID generado de Firebase
+    number: newHouse.number,
+    active: newHouse.active,
+    createdAt: new Date()
+  });
+}
+
+// Luego actualizamos la tabla pivote
+await this.updatePivotTable();
 
       this.utils.presentToast({ message: 'Casa agregada correctamente', color: 'success' });
+      await this.updatePivotTable();
       this.loadAllData();
     }
   });
@@ -249,6 +291,47 @@ async addHouse() {
   return await modal.present();
 }
 
+async deleteHouse(houseId: string, userId: string) {
+  const alert = await this.alertController.create({
+    header: 'Confirmar eliminación',
+    message: '¿Seguro que deseas eliminar esta casa?',
+    buttons: [
+      {
+        text: 'Cancelar',
+        role: 'cancel'
+      },
+      {
+        text: 'Eliminar',
+        role: 'destructive',
+        handler: async () => {
+          try {
+            // 🔹 Eliminar de Firestore
+            await this.firebaseService.deleteDocument(`places/${houseId}`);
+
+            // 🔹 Actualizar lista local
+            const user = this.allUsers.find(u => u.id === userId);
+            if (user) {
+              user.houses = user.houses.filter((h: any) => h.id !== houseId);
+            }
+
+            // 🔹 Actualizar tabla pivote
+            await this.updatePivotTable();
+            await this.loadAllData();
+            this.utils.presentToast({
+              message: 'Casa eliminada correctamente',
+              color: 'success'
+            });
+          } catch (error) {
+            console.error('Error eliminando casa:', error);
+            this.presentAlert('Error', 'No se pudo eliminar la casa');
+          }
+        }
+      }
+    ]
+  });
+
+  await alert.present();
+}
 
   navigateToProfile() {
     this.router.navigate(['/profile']);

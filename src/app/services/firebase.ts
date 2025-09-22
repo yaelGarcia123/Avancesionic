@@ -193,5 +193,11 @@ async addHouseToUser(userId: string, number: string) {
   return await addDoc(collection(getFirestore(), 'places'), newHouse);
 }
 
+async logout() {
+  const auth = getAuth();
+  return await signOut(auth);
+}
+
+
 
 }

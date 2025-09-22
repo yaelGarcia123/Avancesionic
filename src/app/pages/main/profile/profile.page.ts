@@ -149,4 +149,29 @@ export class ProfilePage implements OnInit {
       loading.dismiss();
     }
   }
+
+  async logout() {
+  const loading = await this.utilsSvc.showLoading();
+
+  try {
+    await this.firebaseSvc.logout(); // 🔹 Método para cerrar sesión en Firebase
+    localStorage.clear(); // limpiar datos locales
+    this.utilsSvc.routerLink('/auth'); // redirigir al login
+    this.utilsSvc.presentToast({
+      message: 'Sesión cerrada correctamente',
+      duration: 2000,
+      color: 'success',
+    });
+  } catch (error: any) {
+    console.error('❌ Error al cerrar sesión:', error);
+    this.utilsSvc.presentToast({
+      message: error.message || 'Error al cerrar sesión',
+      duration: 2000,
+      color: 'danger',
+    });
+  } finally {
+    loading.dismiss();
+  }
+}
+
 }
