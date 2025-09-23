@@ -22,18 +22,18 @@ export class AuthPage implements OnInit {
 
   ngOnInit() {}
 
-  // Método de login
+  // Login method
   async submit() {
     if (!this.form.valid) return;
 
     const loading = await this.utilsSvc.showLoading();
 
     try {
-       // Intenta iniciar sesión con Firebase Authentication
+       // Try to sign in with Firebase Authentication
       const res = await this.firebaseSvc.signIn(this.form.value as user);
       await this.getUserInfo(res.user.uid);
     } catch (error: any) {
-      console.log("❌ Error en login:", error);
+      console.log("❌ Login error:", error);
       this.utilsSvc.presentToast({
         message: error.message,
         duration: 2500,
@@ -46,20 +46,20 @@ export class AuthPage implements OnInit {
     }
   }
 
-  // Obtener información del usuario y redirigir según rol
+  // Get user information and redirect based on role
   async getUserInfo(uid: string) {
     const loading = await this.utilsSvc.showLoading();
 
     try {
       const userData = await this.firebaseSvc.getDocument(`users/${uid}`) as user;
-      const completeUser = { ...userData, uid };//Crea un nuevo objeto que copia todas las propiedades de userData y añade/asegura la propiedad uid
+      const completeUser = { ...userData, uid }; // Creates a new object that copies all properties from userData and adds/ensures the uid property
 
       this.utilsSvc.saveLocalStorage('users', completeUser);
 
       if (completeUser.admin) {
         this.utilsSvc.routerLink('/main/admin');
         this.utilsSvc.presentToast({
-          message: `Bienvenido Administrador ${completeUser['name']}`,
+          message: `Welcome Administrator ${completeUser['name']}`,
           duration: 1500,
           color: 'success',
           position: 'middle',
@@ -68,7 +68,7 @@ export class AuthPage implements OnInit {
       } else {
         this.utilsSvc.routerLink('/main/home');
         this.utilsSvc.presentToast({
-          message: `Te damos la bienvenida ${completeUser['name']}`,
+          message: `Welcome ${completeUser['name']}`,
           duration: 1500,
           color: 'primary',
           position: 'middle',
@@ -78,9 +78,9 @@ export class AuthPage implements OnInit {
 
       this.form.reset();
     } catch (error) {
-      console.log('❌ Error al obtener información del usuario:', error);
+      console.log('❌ Error getting user information:', error);
       this.utilsSvc.presentToast({
-        message: 'Error al cargar información del usuario',
+        message: 'Error loading user information',
         duration: 2500,
         color: 'danger',
         position: 'middle',
