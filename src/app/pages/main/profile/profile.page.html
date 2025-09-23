@@ -3,12 +3,12 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home"></ion-back-button>
     </ion-buttons>
-    <ion-title>Mi Perfil</ion-title>
+    <ion-title>My Profile</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <!-- Botón flotante -->
+  <!-- Floating action button -->
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button (click)="toggleEdit()">
       <ion-icon [name]="isEditing ? 'close' : 'create'"></ion-icon>
@@ -16,12 +16,12 @@
   </ion-fab>
 
   <div class="user-crud-container">
-    <!-- Vista de datos -->
-    <div *ngIf="!isEditing && userData" class="user-profile"><!--Esto se muestra solo si isEditing = false -->
+    <!-- Display user data -->
+    <div *ngIf="!isEditing && userData" class="user-profile"><!--Only show if isEditing = false -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Mi Perfil</ion-card-title>
-          <ion-card-subtitle>Información de tu cuenta</ion-card-subtitle>
+          <ion-card-title>My Profile</ion-card-title>
+          <ion-card-subtitle>Account information</ion-card-subtitle>
         </ion-card-header>
 
         <ion-card-content>
@@ -33,7 +33,7 @@
                 color="primary"
               ></ion-icon>
               <ion-label>
-                <h3>Nombre</h3>
+                <h3>Name</h3>
                 <p>{{ userData.name }}</p>
               </ion-label>
             </ion-item>
@@ -63,61 +63,63 @@
             </ion-item>
           </ion-list>
 
+          <!-- Button to toggle edit mode -->
           <ion-button expand="block" color="primary" (click)="toggleEdit()">
             <ion-icon slot="start" name="create-outline"></ion-icon>
-            Editar Perfil
+            Edit Profile
           </ion-button>
 
-        <ion-button expand="block" color="danger" (click)="logout()">
-  <ion-icon slot="start" name="log-out-outline"></ion-icon>
-  Cerrar Sesión
-</ion-button>
+          <!-- Logout button -->
+          <ion-button expand="block" color="danger" (click)="logout()">
+            <ion-icon slot="start" name="log-out-outline"></ion-icon>
+            Logout
+          </ion-button>
 
         </ion-card-content>
       </ion-card>
     </div>
 
-    <!-- Formulario de edición -->
+    <!-- Edit form -->
     <div *ngIf="isEditing && userData" class="edit-form">
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Editar Perfil</ion-card-title>
-
-          <ion-card-subtitle>Actualiza tu información</ion-card-subtitle>
+          <ion-card-title>Edit Profile</ion-card-title>
+          <ion-card-subtitle>Update your information</ion-card-subtitle>
         </ion-card-header>
 
         <ion-card-content>
           <form [formGroup]="userForm" (ngSubmit)="saveChanges()">
+            <!-- Name input -->
             <ion-item>
-              <ion-label position="stacked">Nombre</ion-label>
+              <ion-label position="stacked">Name</ion-label>
               <ion-input formControlName="name" type="text"></ion-input>
             </ion-item>
 
+            <!-- Email input -->
             <ion-item>
               <ion-label position="stacked">Email</ion-label>
               <ion-input formControlName="email" type="email"></ion-input>
             </ion-item>
 
-            <!-- Contraseña actual -->
+            <!-- Current password -->
             <ion-item>
-              <ion-label position="stacked">Contraseña actual (ingresar al editar datos)</ion-label>
+              <ion-label position="stacked">Current password (required to edit info)</ion-label>
               <ion-input
                 formControlName="currentPassword"
                 type="password"
               ></ion-input>
             </ion-item>
 
-            <!-- Nueva contraseña -->
+            <!-- New password -->
             <ion-item>
-              <ion-label position="stacked"
-                >Nueva Contraseña (opcional)</ion-label
-              >
+              <ion-label position="stacked">New password (optional)</ion-label>
               <ion-input formControlName="password" type="password"></ion-input>
             </ion-item>
-            <ion-note color="medium"
-              >Deja en blanco si no quieres cambiar la contraseña</ion-note
-            >
+            <ion-note color="medium">
+              Leave blank if you do not want to change the password
+            </ion-note>
 
+            <!-- Form action buttons -->
             <div class="form-buttons">
               <ion-button
                 expand="block"
@@ -126,7 +128,7 @@
                 [disabled]="!userForm.valid"
               >
                 <ion-icon slot="start" name="save-outline"></ion-icon>
-                Guardar Cambios
+                Save Changes
               </ion-button>
 
               <ion-button
@@ -136,7 +138,7 @@
                 (click)="cancelEdit()"
               >
                 <ion-icon slot="start" name="close-outline"></ion-icon>
-                Cancelar
+                Cancel
               </ion-button>
 
               <ion-button
@@ -146,7 +148,7 @@
                 (click)="confirmDelete()"
               >
                 <ion-icon slot="start" name="trash-outline"></ion-icon>
-                Eliminar Cuenta
+                Delete Account
               </ion-button>
             </div>
           </form>
@@ -154,10 +156,10 @@
       </ion-card>
     </div>
 
-    <!-- Loading -->
+    <!-- Loading state -->
     <div *ngIf="!userData" class="loading">
       <ion-spinner name="crescent"></ion-spinner>
-      <p>Cargando información del usuario...</p>
+      <p>Loading user information...</p>
     </div>
   </div>
 </ion-content>

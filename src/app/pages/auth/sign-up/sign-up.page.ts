@@ -24,28 +24,28 @@ export class SignUpPage implements OnInit {
 
   ngOnInit() {}
 
-  // Registrar usuario
+  // Register user
   async submit() {
     if (!this.form.valid) return;
 
     const loading = await this.utilsSvc.showLoading();
 
     try {
-      // Crear usuario en Firebase Auth
+      // Create user in Firebase Auth
       const res = await this.firebaseSvc.signUp(this.form.value as user);
 
-      // Guardar UID en el formulario
+      // Save UID in the form
       this.form.controls.uid.setValue(res.user.uid);
 
-      // Actualizar displayName en Firebase
+      // Update displayName in Firebase
       await this.firebaseSvc.updateUser(this.form.value.name);
 
-      // Guardar en Firestore
+      // Save user info in Firestore
       await this.setUserInfo(res.user.uid);
 
-      console.log('✅ Registro exitoso:', res);
+      console.log('✅ Registration successful:', res);
     } catch (error: any) {
-      console.log('❌ Error en registro:', error);
+      console.log('❌ Registration error:', error);
       this.utilsSvc.presentToast({
         message: error.message,
         duration: 2500,
@@ -58,27 +58,27 @@ export class SignUpPage implements OnInit {
     }
   }
 
-  // Guardar datos del usuario en Firestore
+  // Save user data in Firestore
   private async setUserInfo(uid: string) {
     const loading = await this.utilsSvc.showLoading();
 
     try {
       const path = `users/${uid}`;
-      const { password, ...userData } = this.form.value; // ❌ Eliminamos la contraseña antes de guardar
+      const { password, ...userData } = this.form.value; // ❌ Remove password before saving
 
       await this.firebaseSvc.setDocument(path, userData);
 
-      // Guardar usuario en localStorage
+      // Save user in localStorage
       this.utilsSvc.saveLocalStorage('users', userData);
 
-      // Redirigir al home
+      // Navigate to home
       this.utilsSvc.routerLink('/main/home');
 
       this.form.reset();
 
-      console.log('✅ Datos guardados en Firestore');
+      console.log('✅ Data saved in Firestore');
     } catch (error: any) {
-      console.log('❌ Error al guardar usuario:', error);
+      console.log('❌ Error saving user:', error);
       this.utilsSvc.presentToast({
         message: error.message,
         duration: 2500,

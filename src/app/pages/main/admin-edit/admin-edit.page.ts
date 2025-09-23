@@ -10,20 +10,19 @@ import { Place } from 'src/app/models/places';
 })
 export class AdminEditPage implements OnInit {
 
-    @Input() house!: Place; // la casa que recibes desde el admin
+    @Input() house!: Place; // the house received from the admin page
 
   constructor(private modalCtrl: ModalController) {}
-ngOnInit() {
-  }
+
+  ngOnInit() {}
+
+  // Close the modal, optionally returning data
   dismiss(data?: any) {
     this.modalCtrl.dismiss(data);
   }
 
+  // Save changes and return the updated house
   saveChanges() {
-    // Retorna la casa actualizada
     this.dismiss(this.house);
-
-  
-
-}
+  }
 }

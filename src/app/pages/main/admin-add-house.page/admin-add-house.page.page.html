@@ -1,6 +1,6 @@
 <ion-header>
   <ion-toolbar color="primary">
-    <ion-title>Agregar Casa</ion-title>
+    <ion-title>Add House</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="dismiss()">
         <ion-icon slot="icon-only" name="close"></ion-icon>
@@ -11,49 +11,49 @@
 
 <ion-content class="ion-padding">
 
-  <!-- Número de la casa -->
+  <!-- House number input -->
   <ion-item>
-    <ion-label position="stacked">Número de la casa</ion-label>
+    <ion-label position="stacked">House Number</ion-label>
     <ion-input [(ngModel)]="newHouse.number"></ion-input>
   </ion-item>
 
-  <!-- Buscador de usuarios -->
+  <!-- User search bar -->
   <ion-searchbar 
     [(ngModel)]="searchTerm" 
     (ionInput)="filterUsers()" 
-    placeholder="Buscar usuario..."
+    placeholder="Search user..."
     debounce="300"
     animated>
   </ion-searchbar>
 
-  <!-- Lista optimizada de usuarios -->
+  <!-- Optimized user list -->
   <ion-list>
-    <ion-radio-group [(ngModel)]="newHouse.userId">  <!--se guarda dentro de newHouse.userId  -->
+    <ion-radio-group [(ngModel)]="newHouse.userId">  <!-- store selected user ID in newHouse.userId -->
 
       <ion-list-header>
-        <ion-label>Asignar a usuario</ion-label>
+        <ion-label>Assign to User</ion-label>
       </ion-list-header>
 
-      <!-- Virtual Scroll para rendimiento -->
-     <ion-list style="max-height: 300px; overflow-y: auto;">
-  <ion-item *ngFor="let user of filteredUsers">
-    <ion-label>{{ user.name }} ({{ user.email }})</ion-label>
-    <ion-radio slot="start" [value]="user.id"></ion-radio>
-  </ion-item>
-</ion-list>
+      <!-- Virtual scroll for performance -->
+      <ion-list style="max-height: 300px; overflow-y: auto;">
+        <ion-item *ngFor="let user of filteredUsers">
+          <ion-label>{{ user.name }} ({{ user.email }})</ion-label>
+          <ion-radio slot="start" [value]="user.id"></ion-radio>
+        </ion-item>
+      </ion-list>
 
     </ion-radio-group>
   </ion-list>
 
-  <!-- Toggle activo/inactivo -->
+  <!-- Active/inactive toggle -->
   <ion-item lines="none">
-    <ion-label>Casa activa</ion-label>
+    <ion-label>Active House</ion-label>
     <ion-toggle [(ngModel)]="newHouse.active"></ion-toggle>
   </ion-item>
 
-  <!-- Botón Guardar -->
+  <!-- Save button -->
   <ion-button expand="block" color="success" (click)="save()">
     <ion-icon slot="start" name="checkmark"></ion-icon>
-    Guardar
+    Save
   </ion-button>
 </ion-content>

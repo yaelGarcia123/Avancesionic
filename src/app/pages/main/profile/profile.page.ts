@@ -11,8 +11,8 @@ import { AlertController } from '@ionic/angular';
   standalone: false,
 })
 export class ProfilePage implements OnInit {
-  userData: any = null; // Guarda los datos actuales del usuario
-  isEditing = false; // Bandera para saber si el usuario está en modo edición
+  userData: any = null; // Stores the current user data
+  isEditing = false; // Flag to know if the user is in edit mode
   userForm: FormGroup;
 
   constructor(
@@ -21,11 +21,12 @@ export class ProfilePage implements OnInit {
     private firebaseSvc: Firebase,
     private alertController: AlertController
   ) {
+    // Initialize reactive form
     this.userForm = this.fb.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       currentPassword: ['', Validators.required],
-      password: [''], // nueva contraseña (opcional)
+      password: [''], // new password (optional)
     });
   }
 
@@ -34,8 +35,10 @@ export class ProfilePage implements OnInit {
   }
 
   async loadUserData() {
+    // Load user data from localStorage
     this.userData = await this.utilsSvc.getFromLocalStorage('users');
     if (this.userData) {
+      // Populate form with existing data
       this.userForm.patchValue({
         name: this.userData.name,
         email: this.userData.email,
@@ -43,10 +46,12 @@ export class ProfilePage implements OnInit {
     }
   }
 
+  // Toggle edit mode
   toggleEdit() {
     this.isEditing = !this.isEditing;
   }
 
+  // Cancel edit and reset form values
   cancelEdit() {
     this.isEditing = false;
     this.userForm.reset({
@@ -62,9 +67,9 @@ export class ProfilePage implements OnInit {
 
     try {
       const user = await this.firebaseSvc.getUser();
-      if (!user) throw new Error('Usuario no autenticado');
+      if (!user) throw new Error('User not authenticated');
 
-      // 🔐 Reautenticar antes de cambios sensibles
+      // 🔐 Reauthenticate before making sensitive changes
       await this.firebaseSvc.reauthenticateUser(
         this.userData.email,
         this.userForm.value.currentPassword
@@ -72,34 +77,37 @@ export class ProfilePage implements OnInit {
       
       const updatedData: any = { name: this.userForm.value.name };
 
+      // Update email if changed
       if (this.userForm.value.email !== this.userData.email) {
         await this.firebaseSvc.updateEmail(this.userForm.value.email);
         updatedData.email = this.userForm.value.email;
       }
 
+      // Update password if provided
       if (this.userForm.value.password) {
         await this.firebaseSvc.updatePassword(this.userForm.value.password);
       }
 
+      // Update user document in Firestore
       await this.firebaseSvc.updateDocument(
         `users/${this.userData.uid}`,
         updatedData
       );
 
-      // ✅ Actualizamos localStorage y UI
+      // ✅ Update localStorage and UI
       this.userData = { ...this.userData, ...updatedData };
       this.utilsSvc.saveLocalStorage('users', this.userData);
 
       this.isEditing = false;
       this.utilsSvc.presentToast({
-        message: 'Perfil actualizado correctamente',
+        message: 'Profile updated successfully',
         duration: 2000,
         color: 'success',
       });
     } catch (error: any) {
-      console.error('❌ Error al actualizar:', error.message);
+      console.error('❌ Error updating profile:', error.message);
       this.utilsSvc.presentToast({
-        message: error.message || 'Error al actualizar el perfil',
+        message: error.message || 'Error updating profile',
         duration: 2000,
         color: 'danger',
       });
@@ -108,20 +116,22 @@ export class ProfilePage implements OnInit {
     }
   }
 
+  // Confirm account deletion
   async confirmDelete() {
     const alert = await this.alertController.create({
-      header: 'Confirmar eliminación',
+      header: 'Confirm Deletion',
       message:
-        '¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.',
+        'Are you sure you want to delete your account? This action cannot be undone.',
       buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        { text: 'Eliminar', handler: () => this.deleteAccount() },
+        { text: 'Cancel', role: 'cancel' },
+        { text: 'Delete', handler: () => this.deleteAccount() },
       ],
     });
 
     await alert.present();
   }
 
+  // Delete user account
   async deleteAccount() {
     const loading = await this.utilsSvc.showLoading();
 
@@ -130,18 +140,18 @@ export class ProfilePage implements OnInit {
       await this.firebaseSvc.deleteUser();
 
       this.utilsSvc.presentToast({
-        message: 'Cuenta eliminada correctamente',
+        message: 'Account deleted successfully',
         duration: 2000,
         color: 'success',
       });
 
-      // 🔹 Opcional: limpiar localStorage y redirigir al login
+      // 🔹 Optional: clear localStorage and redirect to login
       localStorage.clear();
       this.utilsSvc.routerLink('/auth');
     } catch (error: any) {
-      console.error('❌ Error al eliminar cuenta:', error);
+      console.error('❌ Error deleting account:', error);
       this.utilsSvc.presentToast({
-        message: error.message || 'Error al eliminar la cuenta',
+        message: error.message || 'Error deleting account',
         duration: 2000,
         color: 'danger',
       });
@@ -150,28 +160,28 @@ export class ProfilePage implements OnInit {
     }
   }
 
+  // Logout user
   async logout() {
-  const loading = await this.utilsSvc.showLoading();
+    const loading = await this.utilsSvc.showLoading();
 
-  try {
-    await this.firebaseSvc.logout(); // 🔹 Método para cerrar sesión en Firebase
-    localStorage.clear(); // limpiar datos locales
-    this.utilsSvc.routerLink('/auth'); // redirigir al login
-    this.utilsSvc.presentToast({
-      message: 'Sesión cerrada correctamente',
-      duration: 2000,
-      color: 'success',
-    });
-  } catch (error: any) {
-    console.error('❌ Error al cerrar sesión:', error);
-    this.utilsSvc.presentToast({
-      message: error.message || 'Error al cerrar sesión',
-      duration: 2000,
-      color: 'danger',
-    });
-  } finally {
-    loading.dismiss();
+    try {
+      await this.firebaseSvc.logout(); // 🔹 Method to log out from Firebase
+      localStorage.clear(); // clear local data
+      this.utilsSvc.routerLink('/auth'); // redirect to login
+      this.utilsSvc.presentToast({
+        message: 'Logged out successfully',
+        duration: 2000,
+        color: 'success',
+      });
+    } catch (error: any) {
+      console.error('❌ Error logging out:', error);
+      this.utilsSvc.presentToast({
+        message: error.message || 'Error logging out',
+        duration: 2000,
+        color: 'danger',
+      });
+    } finally {
+      loading.dismiss();
+    }
   }
-}
-
 }

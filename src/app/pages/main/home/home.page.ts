@@ -24,29 +24,34 @@ export class HomePage implements OnInit {
   ngOnInit() {
     const auth = getAuth();
 
+    // Listen for authentication state changes
     onAuthStateChanged(auth, (user) => {
       if (user) {
+        // Load places if user is authenticated
         this.loadPlaces();
       } else {
+        // No authenticated user
         this.loading = false;
-        this.error = 'No hay usuario autenticado';
+        this.error = 'No authenticated user';
       }
     });
   }
 
+  // Load places from Firestore for the current user
   async loadPlaces() {
     try {
       this.loading = true;
       this.error = '';
       
       const places = await this.firebaseSvc.getDocumentsByUserRef('places');
-      console.log('Lugares cargados:', places);
+      console.log('Places loaded:', places);
       
       this.places = places as Place[];
     } catch (error: any) {
-      console.error('Error al cargar lugares:', error);
-      this.error = 'Error al cargar las casas. Intenta nuevamente.';
+      console.error('Error loading places:', error);
+      this.error = 'Error loading houses. Please try again.';
       
+      // Show error toast
       this.utilsSvc.presentToast({
         message: this.error,
         duration: 3000,
@@ -57,6 +62,7 @@ export class HomePage implements OnInit {
     }
   }
 
+  // Pull-to-refresh handler
   handleRefresh(event: any) {
     this.loadPlaces().then(() => {
       event.target.complete();

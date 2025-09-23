@@ -1,40 +1,42 @@
-<app-header title="Inicio"></app-header>
+<app-header title="Home"></app-header>
 
 <ion-content>
   <div class="main-content">
     
-    <!-- Mostrar loading mientras carga -->
+    <!-- Show loading while places are being loaded -->
     <div *ngIf="!places" class="loading">
       <ion-spinner></ion-spinner>
-      <p>Cargando lugares...</p>
+      <p>Loading places...</p>
     </div>
 
-    <!-- Mostrar mensaje si no hay casas -->
+    <!-- Show message if there are no houses -->
     <div *ngIf="places && places.length === 0" class="empty-state">
       <ion-icon name="home-outline" size="large"></ion-icon>
-      <h3>No tienes casas registradas</h3>
-      <p>Reportate con soporte tecnico </p>
+      <h3>You have no registered houses</h3>
+      <p>Contact technical support</p>
       <ion-button routerLink="/add-place">
-        help
+        Help
       </ion-button>
     </div>
 
-    <!-- Lista de casas -->
+    <!-- List of houses -->
     <div *ngIf="places && places.length > 0">
-      <h2>Mis Casas</h2>
+      <h2>My Houses</h2>
       
       <ion-list>
         <ion-item *ngFor="let place of places" [routerLink]="['/place-detail', place.id]">
           <ion-icon name="home" slot="start"></ion-icon>
           <ion-label>
             <h3>{{ place.number }}</h3>
-            <p>Propietario: {{ place.user?.name }}</p>
+            <p>Owner: {{ place.user?.name }}</p>
           </ion-label>
+          <!-- Badge for active house -->
           <ion-badge *ngIf="place.active" slot="end" color="success">
-            Activo
+            Active
           </ion-badge>
+          <!-- Badge for inactive house -->
           <ion-badge *ngIf="!place.active" slot="end" color="danger">
-            Inactivo
+            Inactive
           </ion-badge>
         </ion-item>
       </ion-list>

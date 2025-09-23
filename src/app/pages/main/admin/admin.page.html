@@ -3,85 +3,82 @@
 <ion-content>
   <div class="main-content">
     
-    <!-- Botones de acción -->
+    <!-- Action buttons -->
     <div class="action-buttons">
       <ion-button class="action-btn" color="primary" (click)="loadAllData()">
         <ion-icon name="refresh" slot="start"></ion-icon>
-        Actualizar Datos
+        Refresh Data
       </ion-button>
       
-      <ion-button class="action-btn"  color="success">
+      <ion-button class="action-btn" color="success">
         <ion-icon name="download" slot="start"></ion-icon>
-        Exportar Datos
+        Export Data
       </ion-button>
 
-
-       <ion-button class="action-btn" color="primary" (click)="addHouse()">
-  <ion-icon name="home" slot="start"></ion-icon>
-  places
-</ion-button>
-
-
-
+      <ion-button class="action-btn" color="primary" (click)="addHouse()">
+        <ion-icon name="home" slot="start"></ion-icon>
+        Places
+      </ion-button>
     </div>
 
-    <!-- Buscador -->
+    <!-- Search bar -->
     <ion-searchbar 
-      placeholder="Buscar usuario o casa..." 
+      placeholder="Search user or house..." 
       [(ngModel)]="searchTerm" 
       (ionInput)="filterData()"
       animated
       debounce="300">
     </ion-searchbar>
 
-    <!-- Estadísticas rápidas -->
+    <!-- Quick stats -->
     <div class="stats-container">
       <ion-card color="primary">
         <ion-card-header>
           <ion-card-title>{{ filteredUsers.length }}</ion-card-title>
-          <ion-card-subtitle>Usuarios Totales</ion-card-subtitle>
+          <ion-card-subtitle>Total Users</ion-card-subtitle>
         </ion-card-header>
       </ion-card>
 
       <ion-card color="secondary">
         <ion-card-header>
           <ion-card-title>{{ totalHouses }}</ion-card-title>
-          <ion-card-subtitle>Casas Registradas</ion-card-subtitle>
+          <ion-card-subtitle>Registered Houses</ion-card-subtitle>
         </ion-card-header>
       </ion-card>
 
       <ion-card color="tertiary">
         <ion-card-header>
           <ion-card-title>{{ activeHouses }}</ion-card-title>
-          <ion-card-subtitle>Casas Activas</ion-card-subtitle>
+          <ion-card-subtitle>Active Houses</ion-card-subtitle>
         </ion-card-header>
       </ion-card>
     </div>
 
-    <!-- Lista de usuarios con sus casas -->
+    <!-- Users list with their houses -->
     <div class="users-list">
-      <h2>Usuarios y sus Propiedades</h2>
+      <h2>Users and Their Properties</h2>
       
-      <!-- Mostrar loading mientras carga -->
+      <!-- Show loading state -->
       <div *ngIf="loading" class="loading">
         <ion-spinner></ion-spinner>
-        <p>Cargando datos...</p>
+        <p>Loading data...</p>
       </div>
 
-      <!-- Mostrar mensaje si no hay datos -->
+      <!-- Show empty state if no results -->
       <div *ngIf="!loading && filteredUsers.length === 0" class="empty-state">
         <ion-icon name="people-outline" size="large"></ion-icon>
-        <h3>No se encontraron resultados</h3>
-        <p>Intenta con otros términos de búsqueda</p>
+        <h3>No results found</h3>
+        <p>Try different search terms</p>
       </div>
 
-      <!-- Lista de usuarios -->
+      <!-- Users list -->
       <ion-list *ngIf="!loading && filteredUsers.length > 0">
         <ion-item-group *ngFor="let user of filteredUsers">
+          <!-- User header with toggle -->
           <ion-item-divider color="light" (click)="toggleUserHouses(user.id)">
             <ion-label>
               <h2>{{ user.name }}</h2>
-              <p>{{ user.email }} • {{ user.houses.length }} propiedad(es)</p>
+              <p>{{ user.email }} • {{ user.houses.length }} propertie(s)</p>
             </ion-label>
             <ion-button fill="clear" slot="end">
               <ion-icon 
@@ -90,32 +87,32 @@
             </ion-button>
           </ion-item-divider>
           
-          <!-- Casas del usuario (solo se muestran si showHouses es true) -->
-         <div *ngIf="user.showHouses">
-  <ion-item-sliding *ngFor="let house of user.houses" class="house-item">
-    <ion-item>
-      <ion-icon name="home" slot="start" [color]="house.active ? 'success' : 'medium'"></ion-icon>
-      <ion-label>
-        <h3>{{ house.number }}</h3>
-        <p>Estado: {{ house.active ? 'Activo' : 'Inactivo' }}</p>
-       
-      </ion-label>
-      <ion-badge [color]="house.active ? 'success' : 'medium'" slot="end">
-        {{ house.active ? 'Activa' : 'Inactiva' }}
-      </ion-badge>
-    </ion-item>
-    
-    <ion-item-options side="end">
-      <ion-item-option color="primary" (click)="openEditHouse(house, user.id)">
-  <ion-icon slot="icon-only" name="create"></ion-icon>
-</ion-item-option>
+          <!-- User houses (only visible if showHouses is true) -->
+          <div *ngIf="user.showHouses">
+            <ion-item-sliding *ngFor="let house of user.houses" class="house-item">
+              <ion-item>
+                <ion-icon name="home" slot="start" [color]="house.active ? 'success' : 'medium'"></ion-icon>
+                <ion-label>
+                  <h3>{{ house.number }}</h3>
+                  <p>Status: {{ house.active ? 'Active' : 'Inactive' }}</p>
+                </ion-label>
+                <ion-badge [color]="house.active ? 'success' : 'medium'" slot="end">
+                  {{ house.active ? 'Active' : 'Inactive' }}
+                </ion-badge>
+              </ion-item>
+              
+              <!-- Slide options for edit and delete -->
+              <ion-item-options side="end">
+                <ion-item-option color="primary" (click)="openEditHouse(house, user.id)">
+                  <ion-icon slot="icon-only" name="create"></ion-icon>
+                </ion-item-option>
 
-      <ion-item-option color="danger" (click)="deleteHouse(house.id, user.id)">
-        <ion-icon slot="icon-only" name="trash"></ion-icon>
-      </ion-item-option>
-    </ion-item-options>
-  </ion-item-sliding>
-</div>
+                <ion-item-option color="danger" (click)="deleteHouse(house.id, user.id)">
+                  <ion-icon slot="icon-only" name="trash"></ion-icon>
+                </ion-item-option>
+              </ion-item-options>
+            </ion-item-sliding>
+          </div>
         </ion-item-group>
       </ion-list>
     </div>
