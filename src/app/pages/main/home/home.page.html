@@ -3,44 +3,75 @@
 <ion-content>
   <div class="main-content">
     
-    <!-- Show loading while places are being loaded -->
-    <div *ngIf="!places" class="loading">
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading">
       <ion-spinner></ion-spinner>
-      <p>Loading places...</p>
+      <p>Loading houses...</p>
     </div>
 
-    <!-- Show message if there are no houses -->
-    <div *ngIf="places && places.length === 0" class="empty-state">
+    <!-- Empty state -->
+    <div *ngIf="!loading && places && places.length === 0" class="empty-state">
       <ion-icon name="home-outline" size="large"></ion-icon>
-      <h3>You have no registered houses</h3>
-      <p>Contact technical support</p>
-      <ion-button routerLink="/add-place">
+      <h3>No houses registered</h3>
+      <p>Please contact technical support</p>
+      <ion-button routerLink="/add-place" color="primary" shape="round" fill="solid">
         Help
       </ion-button>
     </div>
 
-    <!-- List of houses -->
-    <div *ngIf="places && places.length > 0">
-      <h2>My Houses</h2>
+    <!-- Houses list -->
+    <div *ngIf="!loading && places && places.length > 0">
+      <h2 class="section-title">🏠 My Houses</h2>
       
-      <ion-list>
-        <ion-item *ngFor="let place of places" [routerLink]="['/place-detail', place.id]">
-          <ion-icon name="home" slot="start"></ion-icon>
-          <ion-label>
-            <h3>{{ place.number }}</h3>
-            <p>Owner: {{ place.user?.name }}</p>
-          </ion-label>
-          <!-- Badge for active house -->
-          <ion-badge *ngIf="place.active" slot="end" color="success">
-            Active
-          </ion-badge>
-          <!-- Badge for inactive house -->
-          <ion-badge *ngIf="!place.active" slot="end" color="danger">
-            Inactive
-          </ion-badge>
-        </ion-item>
-      </ion-list>
+      <div class="house-list">
+        <div class="house-card" *ngFor="let place of places" [routerLink]="['/place-detail', place.id]">
+          <div class="house-header">
+            <ion-icon name="home" class="house-icon"></ion-icon>
+            <div class="house-info">
+              <h3>{{ place.number }}</h3>
+              <p>Owner: {{ place.user?.name }}</p>
+            </div>
+            <ion-badge *ngIf="place.active" color="success" class="status-badge">Active</ion-badge>
+            <ion-badge *ngIf="!place.active" color="danger" class="status-badge">Inactive</ion-badge>
+          </div>
+        </div>
+      </div>
+
+      <!-- More options button -->
+      <div class="options-container">
+        <ion-button expand="block" color="secondary" fill="solid" shape="round" (click)="openOptions()">
+          <ion-icon name="settings-outline" slot="start"></ion-icon>
+          More Options
+        </ion-button>
+      </div>
     </div>
 
   </div>
+
+  <!-- Modal de opciones -->
+  <ion-modal [isOpen]="isModalOpen" (didDismiss)="closeModal()">
+    <ng-template>
+      <div class="modal-content">
+        <h2>⚙️ More Options</h2>
+        <p>Select an option below:</p>
+
+        <div class="modal-buttons">
+          <ion-button color="primary" expand="block" shape="round" (click)="goToMessages()">
+            <ion-icon name="chatbubbles-outline" slot="start"></ion-icon>
+            Messages
+          </ion-button>
+
+          <ion-button color="tertiary" expand="block" shape="round" (click)="goToNotices()">
+            <ion-icon name="notifications-outline" slot="start"></ion-icon>
+            Notices
+          </ion-button>
+        </div>
+
+        <ion-button fill="clear" color="medium" (click)="closeModal()">
+          Close
+        </ion-button>
+      </div>
+    </ng-template>
+  </ion-modal>
+
 </ion-content>

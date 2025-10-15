@@ -11,47 +11,38 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
   standalone: false,
 })
 export class HomePage implements OnInit {
-  
+
   firebaseSvc = inject(Firebase);
   utilsSvc = inject(Utils);
 
   places: Place[] = [];
   loading = true;
   error: string = '';
+  isModalOpen = false;
 
   constructor() { }
 
   ngOnInit() {
     const auth = getAuth();
 
-    // Listen for authentication state changes
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        // Load places if user is authenticated
         this.loadPlaces();
       } else {
-        // No authenticated user
         this.loading = false;
         this.error = 'No authenticated user';
       }
     });
   }
 
-  // Load places from Firestore for the current user
   async loadPlaces() {
     try {
       this.loading = true;
       this.error = '';
-      
       const places = await this.firebaseSvc.getDocumentsByUserRef('places');
-      console.log('Places loaded:', places);
-      
       this.places = places as Place[];
     } catch (error: any) {
-      console.error('Error loading places:', error);
       this.error = 'Error loading houses. Please try again.';
-      
-      // Show error toast
       this.utilsSvc.presentToast({
         message: this.error,
         duration: 3000,
@@ -62,10 +53,43 @@ export class HomePage implements OnInit {
     }
   }
 
-  // Pull-to-refresh handler
   handleRefresh(event: any) {
     this.loadPlaces().then(() => {
       event.target.complete();
     });
+  }
+
+  // Open modal
+  openOptions() {
+    this.isModalOpen = true;
+  }
+
+  // Close modal
+  closeModal() {
+    this.isModalOpen = false;
+  }
+
+  // Go to messages
+  async goToMessages() {
+  this.closeModal();
+
+  await this.utilsSvc.routerLink('/messages');
+
+  this.utilsSvc.presentToast({
+    message: 'Opening Messages...',
+    duration: 1500,
+    color: 'primary'
+  });
+}
+
+  // Go to notices
+  goToNotices() {
+    this.closeModal();
+    this.utilsSvc.presentToast({
+      message: 'Opening Notices...',
+      duration: 1500,
+      color: 'tertiary'
+    });
+    // Aquí puedes hacer router.navigate(['/notices']);
   }
 }
