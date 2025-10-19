@@ -2,7 +2,9 @@ import { Component, inject, OnInit } from '@angular/core';
 import { Place } from 'src/app/models/places';
 import { Firebase } from 'src/app/services/firebase';
 import { Utils } from 'src/app/services/utils';
+import { ChatService } from 'src/app/services/chatservice';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { ModalController } from '@ionic/angular';
 
 @Component({
   selector: 'app-home',
@@ -14,13 +16,15 @@ export class HomePage implements OnInit {
 
   firebaseSvc = inject(Firebase);
   utilsSvc = inject(Utils);
+  chatSvc = inject(ChatService);
 
   places: Place[] = [];
   loading = true;
   error: string = '';
   isModalOpen = false;
+  unreadCount: number = 0;
 
-  constructor() { }
+  constructor(private modalCtrl: ModalController) { }
 
   ngOnInit() {
     const auth = getAuth();
@@ -28,6 +32,7 @@ export class HomePage implements OnInit {
     onAuthStateChanged(auth, (user) => {
       if (user) {
         this.loadPlaces();
+        this.loadUnreadCount();
       } else {
         this.loading = false;
         this.error = 'No authenticated user';
@@ -53,36 +58,36 @@ export class HomePage implements OnInit {
     }
   }
 
+  async loadUnreadCount() {
+    try {
+      this.unreadCount = await this.chatSvc.getUnreadCount();
+    } catch (error) {
+      console.error('Error loading unread count:', error);
+    }
+  }
+
   handleRefresh(event: any) {
     this.loadPlaces().then(() => {
+      this.loadUnreadCount();
       event.target.complete();
     });
   }
 
-  // Open modal
   openOptions() {
     this.isModalOpen = true;
   }
 
-  // Close modal
   closeModal() {
     this.isModalOpen = false;
   }
 
-  // Go to messages
   async goToMessages() {
-  this.closeModal();
+    this.closeModal();
+    await this.modalCtrl.dismiss(); // Cierra el modal y espera
+    await this.utilsSvc.routerLink('/messages');
+    this.loadUnreadCount();
+  }
 
-  await this.utilsSvc.routerLink('/messages');
-
-  this.utilsSvc.presentToast({
-    message: 'Opening Messages...',
-    duration: 1500,
-    color: 'primary'
-  });
-}
-
-  // Go to notices
   goToNotices() {
     this.closeModal();
     this.utilsSvc.presentToast({
@@ -90,6 +95,5 @@ export class HomePage implements OnInit {
       duration: 1500,
       color: 'tertiary'
     });
-    // Aquí puedes hacer router.navigate(['/notices']);
   }
 }

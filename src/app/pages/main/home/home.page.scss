@@ -3,17 +3,127 @@ ion-content {
 }
 
 .main-content {
-  padding: 30px;
+  padding: 16px;
 }
 
-/* Modal */
+/* Loading Styles */
+.loading {
+  text-align: center;
+  padding: 40px 20px;
+  
+  ion-spinner {
+    margin-bottom: 16px;
+  }
+  
+  p {
+    margin: 0;
+    color: var(--ion-color-medium);
+  }
+}
+
+/* Empty State Styles */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  
+  ion-icon {
+    color: var(--ion-color-medium);
+    margin-bottom: 16px;
+  }
+  
+  h3 {
+    margin: 0 0 8px 0;
+    color: var(--ion-color-dark);
+  }
+  
+  p {
+    margin: 0 0 20px 0;
+    color: var(--ion-color-medium);
+  }
+}
+
+/* Section Title */
+.section-title {
+  font-weight: 700;
+  color: var(--ion-color-dark);
+  margin: 10px 0 20px 8px;
+}
+
+/* House List Styles */
+.house-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.house-card {
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  padding: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+}
+
+.house-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.house-icon {
+  color: var(--ion-color-primary);
+  font-size: 28px;
+  margin-right: 12px;
+}
+
+.house-info {
+  flex: 1;
+
+  h3 {
+    font-weight: 600;
+    margin: 0;
+    color: var(--ion-color-dark);
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--ion-color-medium);
+    margin: 2px 0 0 0;
+  }
+}
+
+.status-badge {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 12px;
+}
+
+/* Options Container */
+.options-container {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+
+  ion-button {
+    width: 80%;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+}
+
+/* Modal Styles */
 ion-modal::part(content) {
   background: transparent !important;
   box-shadow: none !important;
 }
 
-
-/* Contenido del modal */
 .modal-content {
   background: #ffffff;
   border-radius: 20px;
@@ -38,33 +148,42 @@ ion-modal::part(content) {
     color: var(--ion-color-medium);
     margin-bottom: 25px;
   }
-
-  .modal-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  ion-button {
-    font-weight: 600;
-    font-size: 16px;
-    border-radius: 25px;
-  }
-
-  ion-button[color="primary"] {
-    --background: linear-gradient(90deg, #006cff, #007bff);
-  }
-
-  ion-button[color="tertiary"] {
-    --background: linear-gradient(90deg, #7b2fff, #8c3bff);
-  }
-
-  ion-button[color="medium"] {
-    margin-top: 8px;
-  }
 }
 
-/* Animación suave */
+.modal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.modal-buttons ion-button {
+  position: relative;
+  font-weight: 600;
+  font-size: 16px;
+  border-radius: 25px;
+}
+
+.modal-buttons ion-button[color="primary"] {
+  --background: linear-gradient(90deg, #006cff, #007bff);
+}
+
+.modal-buttons ion-button[color="tertiary"] {
+  --background: linear-gradient(90deg, #7b2fff, #8c3bff);
+}
+
+/* Notification Badge */
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 10px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+}
+
+/* Animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -73,78 +192,5 @@ ion-modal::part(content) {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-/* Rest of your previous styles (list, cards, etc.) */
-.section-title {
-  font-weight: 700;
-  color: var(--ion-color-dark);
-  margin: 10px 0 20px 8px;
-}
-
-.house-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.house-card {
-  background-color: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-  padding: 16px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
-
-  &:hover {
-    transform: scale(1.02);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-  }
-
-  .house-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .house-icon {
-    color: var(--ion-color-primary);
-    font-size: 28px;
-    margin-right: 12px;
-  }
-
-  .house-info {
-    flex: 1;
-
-    h3 {
-      font-weight: 600;
-      margin: 0;
-      color: var(--ion-color-dark);
-    }
-
-    p {
-      font-size: 14px;
-      color: var(--ion-color-medium);
-      margin: 2px 0 0 0;
-    }
-  }
-
-  .status-badge {
-    font-size: 12px;
-    padding: 6px 10px;
-    border-radius: 12px;
-  }
-}
-
-.options-container {
-  margin-top: 24px;
-  display: flex;
-  justify-content: center;
-
-  ion-button {
-    width: 80%;
-    font-weight: 600;
-    letter-spacing: 0.5px;
   }
 }

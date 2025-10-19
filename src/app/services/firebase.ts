@@ -194,4 +194,34 @@ export class Firebase {
     const auth = getAuth();
     return await signOut(auth);
   }
+  async getAdmins() {
+  const q = query(
+    collection(getFirestore(), 'users'),
+    where('admin', '==', true)
+  );
+
+  const querySnapshot = await getDocs(q);
+  const admins: any[] = [];
+  
+  querySnapshot.forEach((doc) => {
+    admins.push({
+      id: doc.id,
+      ...doc.data()
+    });
+  });
+
+  return admins;
+}
+
+// Obtener mensajes no leídos
+async getUnreadMessagesCount(userId: string): Promise<number> {
+  const q = query(
+    collection(getFirestore(), 'messages'),
+    where('to.uid', '==', userId),
+    where('read', '==', false)
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.size;
+}
 }

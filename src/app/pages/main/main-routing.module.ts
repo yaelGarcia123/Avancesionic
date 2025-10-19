@@ -26,6 +26,10 @@ const routes: Routes = [
   {
     path: 'admin-add-house.page',
     loadChildren: () => import('./admin-add-house.page/admin-add-house.page.module').then( m => m.AdminAddHousePagePageModule)
+  },
+  {
+    path: 'messages',
+    loadChildren: () => import('./messages/messages.module').then( m => m.MessagesPageModule)
   }
 
 ];
