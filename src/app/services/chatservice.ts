@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { 
   collection, 
   addDoc, 
@@ -11,16 +11,20 @@ import {
 } from '@angular/fire/firestore';
 import { getFirestore } from '@angular/fire/firestore';
 import { getAuth } from 'firebase/auth';
-import { Utils } from './utils';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ChatService {
   private firestore = getFirestore();
-constructor(private utilsSvc: Utils) {}
-  // Enviar mensaje - FUNCIONA PERFECTO
-  async sendMessage(toUid: string, toName: string, toEmail: string, messageText: string): Promise<void> {
+
+  // Removemos inject(Utils) y lo pasaremos como parámetro cuando sea necesario
+  // O lo inyectamos en el constructor si realmente lo necesitamos en muchos métodos
+
+  constructor() {}
+
+  // Enviar mensaje - MODIFICADO: ahora recibe utils como parámetro
+  async sendMessage(toUid: string, toName: string, toEmail: string, messageText: string, utils?: any): Promise<void> {
     try {
       const auth = getAuth();
       const user = auth.currentUser;
@@ -43,21 +47,24 @@ constructor(private utilsSvc: Utils) {}
         type: 'user_to_admin'
       };
 
-      // ✅ Esto crea automáticamente la colección "messages"
       await addDoc(collection(this.firestore, 'messages'), messageData);
       
-      this.utilsSvc.presentToast({
-        message: 'Mensaje enviado al administrador',
-        duration: 2000,
-        color: 'success'
-      });
+      if (utils) {
+        utils.presentToast({
+          message: 'Mensaje enviado al administrador',
+          duration: 2000,
+          color: 'success'
+        });
+      }
     } catch (error) {
       console.error('Error enviando mensaje:', error);
-      this.utilsSvc.presentToast({
-        message: 'Error al enviar mensaje',
-        duration: 3000,
-        color: 'danger'
-      });
+      if (utils) {
+        utils.presentToast({
+          message: 'Error al enviar mensaje',
+          duration: 3000,
+          color: 'danger'
+        });
+      }
     }
   }
 
@@ -70,7 +77,6 @@ constructor(private utilsSvc: Utils) {}
       throw new Error('Usuario no autenticado');
     }
 
-    // ✅ Escucha TODOS los mensajes y filtra localmente - NO requiere índice
     const messagesRef = collection(this.firestore, 'messages');
     
     return onSnapshot(messagesRef, (snapshot) => {
@@ -79,7 +85,6 @@ constructor(private utilsSvc: Utils) {}
       snapshot.forEach((doc) => {
         const messageData = doc.data();
         
-        // Filtrar solo mensajes entre este usuario y el admin
         if (
           (messageData['fromUid'] === user.uid && messageData['toUid'] === adminUid) ||
           (messageData['fromUid'] === adminUid && messageData['toUid'] === user.uid)
@@ -91,7 +96,6 @@ constructor(private utilsSvc: Utils) {}
         }
       });
 
-      // Ordenar por timestamp
       allMessages.sort((a, b) => {
         const timeA = a.timestamp?.toMillis?.() || 0;
         const timeB = b.timestamp?.toMillis?.() || 0;
@@ -102,7 +106,7 @@ constructor(private utilsSvc: Utils) {}
     });
   }
 
-  // Obtener administradores - FUNCIONA PERFECTO
+  // Obtener administradores
   async getAdmins(): Promise<any[]> {
     try {
       const usersRef = collection(this.firestore, 'users');
@@ -127,7 +131,7 @@ constructor(private utilsSvc: Utils) {}
     }
   }
 
-  // Obtener mensajes no leídos - VERSIÓN SIMPLIFICADA
+  // Obtener mensajes no leídos
   async getUnreadCount(): Promise<number> {
     try {
       const auth = getAuth();
@@ -167,71 +171,68 @@ constructor(private utilsSvc: Utils) {}
     }
   }
 
- // En ChatService
-async getAdminMessages(adminUid: string): Promise<any[]> {
-  try {
+  // Obtener la lista de usuarios que han enviado mensajes al admin
+  async getUsersWithMessages(adminUid: string): Promise<any[]> {
     const messagesRef = collection(this.firestore, 'messages');
     const snapshot = await getDocs(messagesRef);
-    
-    const messages: any[] = [];
-    
-    snapshot.forEach((doc) => {
-      const messageData = doc.data();
-      // Filtrar mensajes donde el admin es el receptor O el emisor
-      if (messageData['toUid'] === adminUid || messageData['fromUid'] === adminUid) {
-        messages.push({
-          id: doc.id,
-          ...messageData,
-          timestamp: messageData['timestamp']?.toDate() || new Date()
-        });
-      }
-    });
 
-    // Ordenar por timestamp
-    return messages.sort((a, b) => b.timestamp - a.timestamp);
-  } catch (error) {
-    console.error('Error getting admin messages:', error);
-    return [];
-  }
-}
-// Mejora el método getUsersWithMessages
-async getUsersWithMessages(adminUid: string): Promise<any[]> {
-  try {
-    const messages = await this.getAdminMessages(adminUid);
     const userMap = new Map<string, any>();
 
-    messages.forEach((msg) => {
-      // Determinar el ID del usuario (no admin) en la conversación
-      const userId = msg.fromUid === adminUid ? msg.toUid : msg.fromUid;
-      const userName = msg.fromUid === adminUid ? msg.toName : msg.fromName;
-      const userEmail = msg.fromUid === adminUid ? msg.toEmail : msg.fromEmail;
-
-      if (userId !== adminUid) { // Asegurar que no sea el admin
-        if (!userMap.has(userId)) {
-          userMap.set(userId, {
-            id: userId,
-            name: userName || 'Usuario',
-            email: userEmail || 'Sin email',
-            lastMessage: msg.message,
-            timestamp: msg.timestamp,
-            unread: msg.toUid === adminUid && !msg.read // Mensajes no leídos para admin
-          });
-        } else {
-          // Actualizar con el mensaje más reciente
-          const existingUser = userMap.get(userId);
-          if (msg.timestamp > existingUser.timestamp) {
-            existingUser.lastMessage = msg.message;
-            existingUser.timestamp = msg.timestamp;
-            existingUser.unread = msg.toUid === adminUid && !msg.read;
+    snapshot.forEach((docSnap) => {
+      const msg = docSnap.data();
+      if (msg['toUid'] === adminUid || msg['fromUid'] === adminUid) {
+        const userId = msg['fromUid'] === adminUid ? msg['toUid'] : msg['fromUid'];
+        const userName = msg['fromUid'] === adminUid ? msg['toName'] : msg['fromName'];
+        const userEmail = msg['fromUid'] === adminUid ? msg['toEmail'] : msg['fromEmail'];
+        
+        if (userId !== adminUid) {
+          if (!userMap.has(userId)) {
+            userMap.set(userId, {
+              id: userId,
+              name: userName || 'Usuario',
+              email: userEmail || 'Sin email',
+              lastMessage: msg['message'],
+              timestamp: msg['timestamp']?.toDate() || new Date(),
+              unread: msg['toUid'] === adminUid && !msg['read']
+            });
+          } else {
+            const existingUser = userMap.get(userId);
+            if (msg['timestamp']?.toDate() > existingUser.timestamp) {
+              existingUser.lastMessage = msg['message'];
+              existingUser.timestamp = msg['timestamp']?.toDate() || new Date();
+              existingUser.unread = msg['toUid'] === adminUid && !msg['read'];
+            }
           }
         }
       }
     });
 
     return Array.from(userMap.values()).sort((a, b) => b.timestamp - a.timestamp);
-  } catch (error) {
-    console.error('Error getting users with messages:', error);
-    return [];
   }
-}
+
+  // Nuevo método para obtener mensajes del admin
+  async getAdminMessages(adminUid: string): Promise<any[]> {
+    try {
+      const messagesRef = collection(this.firestore, 'messages');
+      const snapshot = await getDocs(messagesRef);
+      
+      const messages: any[] = [];
+      
+      snapshot.forEach((doc) => {
+        const messageData = doc.data();
+        if (messageData['toUid'] === adminUid || messageData['fromUid'] === adminUid) {
+          messages.push({
+            id: doc.id,
+            ...messageData,
+            timestamp: messageData['timestamp']?.toDate() || new Date()
+          });
+        }
+      });
+
+      return messages.sort((a, b) => b.timestamp - a.timestamp);
+    } catch (error) {
+      console.error('Error getting admin messages:', error);
+      return [];
+    }
+  }
 }
