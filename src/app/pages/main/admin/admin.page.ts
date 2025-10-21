@@ -242,9 +242,8 @@ export class AdminPage implements OnInit {
     await alert.present();
   }
 
-  // ===========================
-  //  MENSAJES / CHAT
-  // ===========================
+  //  MENSAJES chat
+ 
   async loadMessageUsers() {
     if (!this.currentUid) {
       console.error('No hay usuario admin autenticado');
