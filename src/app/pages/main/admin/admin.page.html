@@ -1,23 +1,22 @@
-
-
 <ion-content>
   <app-headeradmin title="ADMINISTRADOR"></app-headeradmin>
   <div class="admin-layout">
-
     <!-- ===== Sidebar ===== -->
     <div class="sidebar">
       <h3>Panel</h3>
       <ul>
-        <li 
-          [class.active]="selectedSection === 'users'" 
-          (click)="selectedSection = 'users'">
+        <li
+          [class.active]="selectedSection === 'users'"
+          (click)="selectedSection = 'users'"
+        >
           <ion-icon name="people-outline"></ion-icon>
           Usuarios y Casas
         </li>
 
-        <li 
-          [class.active]="selectedSection === 'messages'" 
-          (click)="selectedSection = 'messages'">
+        <li
+          [class.active]="selectedSection === 'messages'"
+          (click)="selectedSection = 'messages'"
+        >
           <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
           Mensajes
         </li>
@@ -26,18 +25,21 @@
 
     <!-- ===== Main Content ===== -->
     <div class="main-content">
-
       <!-- 🏠 Sección: Usuarios y Casas -->
       <div *ngIf="selectedSection === 'users'" class="content-wrapper">
         <h1 class="section-title">Usuarios y Casas</h1>
 
         <!-- Botones de acción -->
         <div class="action-buttons">
-          <ion-button class="action-btn" color="primary" (click)="loadAllData()">
+          <ion-button
+            class="action-btn"
+            color="primary"
+            (click)="loadAllData()"
+          >
             <ion-icon name="refresh" slot="start"></ion-icon>
             Refresh Data
           </ion-button>
-          
+
           <ion-button class="action-btn" color="success">
             <ion-icon name="download" slot="start"></ion-icon>
             Export Data
@@ -50,12 +52,13 @@
         </div>
 
         <!-- Barra de búsqueda -->
-        <ion-searchbar 
-          placeholder="Buscar usuario o casa..." 
-          [(ngModel)]="searchTerm" 
+        <ion-searchbar
+          placeholder="Buscar usuario o casa..."
+          [(ngModel)]="searchTerm"
           (ionInput)="filterData()"
           animated
-          debounce="300">
+          debounce="300"
+        >
         </ion-searchbar>
 
         <!-- Estadísticas rápidas -->
@@ -91,45 +94,73 @@
             <p>Cargando datos...</p>
           </div>
 
-          <div *ngIf="!loading && filteredUsers.length === 0" class="empty-state">
+          <div
+            *ngIf="!loading && filteredUsers.length === 0"
+            class="empty-state"
+          >
             <ion-icon name="people-outline" size="large"></ion-icon>
             <h3>No se encontraron resultados</h3>
             <p>Intenta con otros términos de búsqueda</p>
           </div>
 
-          <ion-list *ngIf="!loading && filteredUsers.length > 0" class="user-list-scroll">
+          <ion-list
+            *ngIf="!loading && filteredUsers.length > 0"
+            class="user-list-scroll"
+          >
             <ion-item-group *ngFor="let user of filteredUsers">
-              <ion-item-divider color="light" (click)="toggleUserHouses(user.id)">
+              <ion-item-divider
+                color="light"
+                (click)="toggleUserHouses(user.id)"
+              >
                 <ion-label>
                   <h2>{{ user.name }}</h2>
-                  <p>{{ user.email }} • {{ user.houses.length }} propiedad(es)</p>
+                  <p>
+                    {{ user.email }} • {{ user.houses.length }} propiedad(es)
+                  </p>
                 </ion-label>
                 <ion-button fill="clear" slot="end">
-                  <ion-icon 
-                    [name]="user.showHouses ? 'chevron-up-outline' : 'chevron-down-outline'">
+                  <ion-icon
+                    [name]="user.showHouses ? 'chevron-up-outline' : 'chevron-down-outline'"
+                  >
                   </ion-icon>
                 </ion-button>
               </ion-item-divider>
 
               <div *ngIf="user.showHouses" class="houses-container">
-                <ion-item-sliding *ngFor="let house of user.houses" class="house-item">
+                <ion-item-sliding
+                  *ngFor="let house of user.houses"
+                  class="house-item"
+                >
                   <ion-item>
-                    <ion-icon name="home" slot="start" [color]="house.active ? 'success' : 'medium'"></ion-icon>
+                    <ion-icon
+                      name="home"
+                      slot="start"
+                      [color]="house.active ? 'success' : 'medium'"
+                    ></ion-icon>
                     <ion-label>
                       <h3>{{ house.number }}</h3>
                       <p>Estado: {{ house.active ? 'Activa' : 'Inactiva' }}</p>
                     </ion-label>
-                    <ion-badge [color]="house.active ? 'success' : 'medium'" slot="end">
+                    <ion-badge
+                      [color]="house.active ? 'success' : 'medium'"
+                      slot="end"
+                    >
                       {{ house.active ? 'Activa' : 'Inactiva' }}
                     </ion-badge>
                   </ion-item>
 
                   <ion-item-options side="end">
-                    <ion-item-option color="primary" (click)="openEditHouse(house, user.id)">
+                    <ion-item-option
+                      color="primary"
+                      (click)="openEditHouse(house, user.id)"
+                    >
                       <ion-icon slot="icon-only" name="create"></ion-icon>
                     </ion-item-option>
 
-                    <ion-item-option color="danger" (click)="deleteHouse(house.id, user.id)">
+                    <ion-item-option
+                      color="danger"
+                      (click)="deleteHouse(house.id, user.id)"
+                    >
                       <ion-icon slot="icon-only" name="trash"></ion-icon>
                     </ion-item-option>
                   </ion-item-options>
@@ -141,15 +172,115 @@
       </div>
 
       <!-- 💬 Sección: Mensajes -->
-      <div *ngIf="selectedSection === 'messages'" class="content-wrapper">
-        <h1 class="section-title">Mensajes</h1>
+   <div *ngIf="selectedSection === 'messages'" class="content-wrapper chat-wrapper">
+  <h1 class="section-title">Mensajes</h1>
 
-        <div class="empty-state">
-          <ion-icon name="chatbubble-ellipses-outline" size="large"></ion-icon>
-          <h3>No hay mensajes disponibles</h3>
-          <p>Los mensajes aparecerán aquí cuando se reciban.</p>
+  <div class="chat-layout">
+    <!-- Lista de usuarios con mensajes -->
+    <div class="chat-users">
+      <h3>Conversaciones</h3>
+      
+      <!-- Estado vacío -->
+      <div *ngIf="messageUsers.length === 0" class="empty-state">
+        <ion-icon name="chatbubble-outline" size="large"></ion-icon>
+        <h3>No hay mensajes</h3>
+        <p>Los mensajes aparecerán aquí cuando los usuarios te contacten</p>
+      </div>
+
+      <!-- Lista de usuarios -->
+      <ion-list *ngIf="messageUsers.length > 0">
+        <ion-item
+          button
+          *ngFor="let user of messageUsers"
+          (click)="openChat(user)"
+          [class.selected]="selectedChatUser?.id === user.id"
+          detail="false"
+        >
+          <ion-avatar slot="start">
+            <img [src]="user.photoURL || 'assets/default-avatar.png'" alt="Avatar" />
+          </ion-avatar>
+          <ion-label>
+            <h3>{{ user.name || 'Usuario' }}</h3>
+            <p>{{ user.email }}</p>
+            <p class="last-message" *ngIf="user.lastMessage">
+              {{ (user.lastMessage.length > 30) ? (user.lastMessage | slice:0:30) + '...' : user.lastMessage }}
+            </p>
+            <small *ngIf="user.timestamp">{{ user.timestamp | date:'MMM d, h:mm a' }}</small>
+          </ion-label>
+          <ion-badge *ngIf="user.unread" color="danger" slot="end">
+            {{ user.unreadCount || '' }}
+          </ion-badge>
+        </ion-item>
+      </ion-list>
+    </div>
+
+    <!-- Ventana de chat -->
+    <div class="chat-window" *ngIf="selectedChatUser">
+      <div class="chat-header">
+        <ion-button fill="clear" (click)="closeChat()" class="back-button">
+          <ion-icon name="arrow-back" slot="icon-only"></ion-icon>
+        </ion-button>
+        <div class="chat-user-info">
+          <ion-avatar class="small-avatar">
+            <img [src]="selectedChatUser.photoURL || 'assets/default-avatar.png'" alt="Avatar" />
+          </ion-avatar>
+          <div>
+            <h3>{{ selectedChatUser.name || 'Usuario' }}</h3>
+            <p>{{ selectedChatUser.email }}</p>
+          </div>
         </div>
       </div>
+
+      <!-- Área de mensajes -->
+      <div class="chat-messages" #messageContainer>
+        <div *ngIf="(messages$ | async)?.length === 0" class="no-messages">
+          <p>No hay mensajes en esta conversación</p>
+          <p>Envía el primer mensaje</p>
+        </div>
+        
+        <div
+          *ngFor="let msg of messages$ | async"
+          [ngClass]="{
+            'my-message': msg.fromUid === currentUid,
+            'other-message': msg.fromUid !== currentUid
+          }"
+          class="message-bubble"
+        >
+          <p class="message-text">{{ msg.message }}</p>
+          <small class="message-time">
+            {{ msg.timestamp?.toDate ? (msg.timestamp.toDate() | date:'shortTime') : (msg.timestamp | date:'shortTime') }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Input para enviar mensajes -->
+      <div class="chat-input">
+        <ion-input
+          [(ngModel)]="newMessage"
+          placeholder="Escribe un mensaje..."
+          (keyup.enter)="sendMessage()"
+          class="message-input"
+        ></ion-input>
+        <ion-button 
+          (click)="sendMessage()" 
+          color="primary" 
+          [disabled]="!newMessage.trim()"
+          class="send-button"
+        >
+          <ion-icon name="send" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+
+    <!-- Placeholder cuando no hay chat seleccionado -->
+    <div *ngIf="!selectedChatUser && messageUsers.length > 0" class="chat-placeholder">
+      <ion-icon name="chatbubble-ellipses-outline" size="large"></ion-icon>
+      <h3>Selecciona una conversación</h3>
+      <p>Elige un usuario de la lista para ver los mensajes</p>
+    </div>
+  </div>
+</div>
+
     </div>
   </div>
 </ion-content>

@@ -18,8 +18,7 @@ import { Utils } from './utils';
 })
 export class ChatService {
   private firestore = getFirestore();
-  private utilsSvc = inject(Utils);
-
+constructor(private utilsSvc: Utils) {}
   // Enviar mensaje - FUNCIONA PERFECTO
   async sendMessage(toUid: string, toName: string, toEmail: string, messageText: string): Promise<void> {
     try {
@@ -167,4 +166,72 @@ export class ChatService {
       console.error('Error marking messages as read:', error);
     }
   }
+
+ // En ChatService
+async getAdminMessages(adminUid: string): Promise<any[]> {
+  try {
+    const messagesRef = collection(this.firestore, 'messages');
+    const snapshot = await getDocs(messagesRef);
+    
+    const messages: any[] = [];
+    
+    snapshot.forEach((doc) => {
+      const messageData = doc.data();
+      // Filtrar mensajes donde el admin es el receptor O el emisor
+      if (messageData['toUid'] === adminUid || messageData['fromUid'] === adminUid) {
+        messages.push({
+          id: doc.id,
+          ...messageData,
+          timestamp: messageData['timestamp']?.toDate() || new Date()
+        });
+      }
+    });
+
+    // Ordenar por timestamp
+    return messages.sort((a, b) => b.timestamp - a.timestamp);
+  } catch (error) {
+    console.error('Error getting admin messages:', error);
+    return [];
+  }
+}
+// Mejora el método getUsersWithMessages
+async getUsersWithMessages(adminUid: string): Promise<any[]> {
+  try {
+    const messages = await this.getAdminMessages(adminUid);
+    const userMap = new Map<string, any>();
+
+    messages.forEach((msg) => {
+      // Determinar el ID del usuario (no admin) en la conversación
+      const userId = msg.fromUid === adminUid ? msg.toUid : msg.fromUid;
+      const userName = msg.fromUid === adminUid ? msg.toName : msg.fromName;
+      const userEmail = msg.fromUid === adminUid ? msg.toEmail : msg.fromEmail;
+
+      if (userId !== adminUid) { // Asegurar que no sea el admin
+        if (!userMap.has(userId)) {
+          userMap.set(userId, {
+            id: userId,
+            name: userName || 'Usuario',
+            email: userEmail || 'Sin email',
+            lastMessage: msg.message,
+            timestamp: msg.timestamp,
+            unread: msg.toUid === adminUid && !msg.read // Mensajes no leídos para admin
+          });
+        } else {
+          // Actualizar con el mensaje más reciente
+          const existingUser = userMap.get(userId);
+          if (msg.timestamp > existingUser.timestamp) {
+            existingUser.lastMessage = msg.message;
+            existingUser.timestamp = msg.timestamp;
+            existingUser.unread = msg.toUid === adminUid && !msg.read;
+          }
+        }
+      }
+    });
+
+    return Array.from(userMap.values()).sort((a, b) => b.timestamp - a.timestamp);
+  } catch (error) {
+    console.error('Error getting users with messages:', error);
+    return [];
+  }
+}
 }

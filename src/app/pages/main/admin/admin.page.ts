@@ -3,10 +3,15 @@ import { Router } from '@angular/router';
 import { AlertController, LoadingController, ModalController } from '@ionic/angular';
 import { Firebase } from 'src/app/services/firebase';
 import { AdminEditPage } from '../admin-edit/admin-edit.page';
-import { doc, getFirestore, collection, setDoc, deleteDoc } from 'firebase/firestore';
-import { Utils } from 'src/app/services/utils';
 import { AdminAddHousePagePage } from '../admin-add-house.page/admin-add-house.page.page';
 import { HouseResident } from 'src/app/models/HouseResident';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { getAuth } from 'firebase/auth';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { ChatService } from 'src/app/services/chatservice';
+import { doc, getFirestore, collection, setDoc, deleteDoc } from 'firebase/firestore';
+import { Utils } from 'src/app/services/utils';
 
 @Component({
   selector: 'app-admin',
@@ -15,59 +20,74 @@ import { HouseResident } from 'src/app/models/HouseResident';
   standalone: false,
 })
 export class AdminPage implements OnInit {
-  @Input() backbutton!: string; // Input to optionally show a back button label or route
-  
-  allUsers: any[] = [];        // Stores all loaded users with their houses
-  filteredUsers: any[] = [];   // Stores the users after applying a search filter
-  searchTerm: string = '';     // Holds the search term for filtering
-  loading: boolean = true;     // Indicates whether data is currently loading
-  totalHouses: number = 0;     // Total number of houses across all users
-  activeHouses: number = 0;    // Total number of active houses
+  @Input() backbutton!: string;
 
-  private db = getFirestore(); // Firestore database reference
+  // ===== Variables generales =====
+  currentUid: string | null = null;
+  selectedSection: string = 'users';
+
+  // ===== Usuarios y Casas =====
+  allUsers: any[] = [];
+  filteredUsers: any[] = [];
+  searchTerm: string = '';
+  loading: boolean = true;
+  totalHouses: number = 0;
+  activeHouses: number = 0;
+
+  // ===== Chat =====
+  messageUsers: any[] = []; // lista de usuarios que han enviado mensajes
+  users$: Observable<any[]> | undefined;
+  selectedChatUser: any = null;
+  messages$: Observable<any[]> | undefined;
+  newMessage: string = '';
+  unreadCounts: { [userId: string]: number } = {};
+
+  private db = getFirestore();
 
   constructor(
-    private modalCtrl: ModalController,      // For opening modals (edit/add pages)
-    private router: Router,                  // For page navigation
-    private firebaseService: Firebase,       // Custom Firebase service for data fetching
-    private alertController: AlertController,// To show alerts
-    private loadingController: LoadingController, // To show loading indicators
-    private utils: Utils                     // Utility service (e.g., toasts)
+    private modalCtrl: ModalController,
+    private router: Router,
+    private firebaseService: Firebase,
+    private alertController: AlertController,
+    private loadingController: LoadingController,
+    private utils: Utils,
+    private chatService: ChatService,
+    private firestore: AngularFirestore // Inyectado en el constructor
   ) {}
-selectedSection: string = 'users';
 
   ngOnInit() {
-    this.loadAllData(); // Load all data when the component initializes
+    const auth = getAuth();
+    this.currentUid = auth.currentUser?.uid || null;
+
+    this.loadAllData(); // cargar usuarios y casas
+    if (this.currentUid) this.loadMessageUsers(); // cargar usuarios con mensajes
   }
 
+  // ===========================
+  //  USUARIOS Y CASAS
+  // ===========================
   async loadAllData() {
-    // Shows a loading spinner and fetches all users and their houses
     this.loading = true;
-    const loading = await this.loadingController.create({
-      message: 'Cargando datos...', // Message while loading
-    });
+    const loading = await this.loadingController.create({ message: 'Cargando datos...' });
     await loading.present();
 
     try {
-      const usersDocs = await this.firebaseService.getAllUsers(); // Fetch users
+      const usersDocs = await this.firebaseService.getAllUsers();
       this.allUsers = [];
       this.totalHouses = 0;
       this.activeHouses = 0;
 
-      // Iterate through each user document
       for (const userDoc of usersDocs) {
         const userData: any = userDoc.data();
-        // Build a user object with default values
         const user = {
           id: userDoc.id,
           name: userData.name || 'Sin nombre',
           email: userData.email || 'Sin email',
           active: userData.active !== false,
           houses: [],
-          showHouses: false
+          showHouses: false,
         };
 
-        // Fetch houses for this user
         const userHouses = await this.firebaseService.getHousesByUserId(userDoc.id);
         user.houses = userHouses.map((house: any) => {
           this.totalHouses++;
@@ -76,132 +96,104 @@ selectedSection: string = 'users';
             id: house.id,
             number: house.number,
             active: house.active,
-            createdAt: house.createdAt || new Date()
+            createdAt: house.createdAt || new Date(),
           };
         });
 
-        this.allUsers.push(user); // Add the user with their houses to the list
+        this.allUsers.push(user);
       }
 
-      this.filteredUsers = [...this.allUsers]; // Initially, no filter applied
+      this.filteredUsers = [...this.allUsers];
     } catch (error) {
       console.error('Error loading data:', error);
-      this.presentAlert('Error', 'No se pudieron cargar los datos. Intenta nuevamente.');
+      this.presentAlert('Error', 'No se pudieron cargar los datos.');
     } finally {
       this.loading = false;
-      await loading.dismiss(); // Hide the loading spinner
+      await loading.dismiss();
     }
   }
 
-  // Creates or updates a pivot document linking a user and a house
+  filterData() {
+    if (!this.searchTerm.trim()) {
+      this.filteredUsers = [...this.allUsers];
+      return;
+    }
+
+    const term = this.searchTerm.toLowerCase();
+    this.filteredUsers = this.allUsers
+      .filter(user => {
+        const userMatch = user.name.toLowerCase().includes(term) || user.email.toLowerCase().includes(term);
+        const houseMatch = user.houses.some((house: any) => house.number.toLowerCase().includes(term));
+        return userMatch || houseMatch;
+      })
+      .map(user => ({
+        ...user,
+        showHouses: user.houses.some((house: any) => house.number.toLowerCase().includes(term)),
+      }));
+  }
+
+  toggleUserHouses(userId: string) {
+    this.filteredUsers = this.filteredUsers.map(user => ({
+      ...user,
+      showHouses: user.id === userId ? !user.showHouses : user.showHouses,
+    }));
+  }
+
+  async presentAlert(header: string, message: string) {
+    const alert = await this.alertController.create({ header, message, buttons: ['OK'] });
+    await alert.present();
+  }
+
   private async createOrUpdateHousePivot(userId: string, houseId: string) {
     const pivotRef = doc(this.db, 'homeowners', houseId);
     const pivotData: HouseResident = {
-      userRef: doc(this.db, 'users', userId),   // Reference to the user document
-      houseRef: doc(this.db, 'places', houseId),// Reference to the house document
-      role: 'propietario',                      // Owner role
-      createdAt: new Date()
+      userRef: doc(this.db, 'users', userId),
+      houseRef: doc(this.db, 'places', houseId),
+      role: 'propietario',
+      createdAt: new Date(),
     };
     await setDoc(pivotRef, pivotData);
   }
 
-  // Deletes the pivot document for a house-owner relationship
   private async deleteHousePivot(houseId: string) {
     const pivotRef = doc(this.db, 'homeowners', houseId);
     await deleteDoc(pivotRef);
   }
 
-  // Filters users and their houses by the search term
-  filterData() {
-    if (this.searchTerm.length == 0) {
-      // If no search term, reset to all users
-      this.filteredUsers = this.allUsers.map(user => ({ ...user }));
-      return;
-    }
-
-    const term = this.searchTerm.toLowerCase();
-    this.filteredUsers = this.allUsers.filter(user => {
-      // Match by user name or email
-      const userMatch = user.name.toLowerCase().includes(term) || 
-                        user.email.toLowerCase().includes(term);
-      // Match by any house number
-      const houseMatch = user.houses.some((house: any) => 
-        house.number.toLowerCase().includes(term)
-      );
-      return userMatch || houseMatch;
-    }).map(user => {
-      const houseMatch = user.houses.some((house: any) => 
-        house.number.toLowerCase().includes(term)
-      );
-      // Show houses automatically if a house matches the filter
-      return { ...user, showHouses: houseMatch };
-    });
-  }
-
-  // Toggles the visibility of a user's houses
-  toggleUserHouses(userId: string) {
-    this.filteredUsers = this.filteredUsers.map(user => {
-      if (user.id === userId) {
-        return { ...user, showHouses: !user.showHouses };
-      }
-      return user;
-    });
-  }
-  
-  // Shows an alert with a header and message
-  async presentAlert(header: string, message: string) {
-    const alert = await this.alertController.create({
-      header,
-      message,
-      buttons: ['OK']
-    });
-    await alert.present();
-  }
-
-  // Opens the edit house modal and updates Firestore when a house is changed
   async openEditHouse(house: any, userId: string) {
     const modal = await this.modalCtrl.create({
       component: AdminEditPage,
       componentProps: { house: { ...house } },
     });
 
-    modal.onDidDismiss().then(async (result) => {
+    modal.onDidDismiss().then(async result => {
       if (result.data) {
         const updatedHouse = result.data;
-
-        // Update the house document in Firestore
-        await this.firebaseService.updateDocument(
-          `places/${updatedHouse.id}`,
-          { number: updatedHouse.number, active: updatedHouse.active }
-        );
-
-        // Update the local user object
+        await this.firebaseService.updateDocument(`places/${updatedHouse.id}`, {
+          number: updatedHouse.number,
+          active: updatedHouse.active,
+        });
         const user = this.allUsers.find(u => u.id === userId);
         if (user) {
           const idx = user.houses.findIndex((h: any) => h.id === updatedHouse.id);
           if (idx > -1) user.houses[idx] = updatedHouse;
         }
-
-        // Update the pivot relationship
         await this.createOrUpdateHousePivot(userId, updatedHouse.id);
       }
     });
 
-    return await modal.present();
+    await modal.present();
   }
 
-  // Opens the add house modal and creates a new house in Firestore
   async addHouse() {
     const modal = await this.modalCtrl.create({
       component: AdminAddHousePagePage,
-      componentProps: { allUsers: this.allUsers }
+      componentProps: { allUsers: this.allUsers },
     });
 
-    modal.onDidDismiss().then(async (result) => {
+    modal.onDidDismiss().then(async result => {
       if (result.data) {
         const newHouse = result.data;
-
-        // Create a new house document reference
         const newHouseRef = doc(collection(this.db, 'places'));
         const houseId = newHouseRef.id;
 
@@ -211,36 +203,20 @@ selectedSection: string = 'users';
           createdAt: new Date(),
           user: {
             ref: doc(this.db, 'users', newHouse.userId),
-            name: this.allUsers.find(u => u.id === newHouse.userId)?.name || null
-          }
+            name: this.allUsers.find(u => u.id === newHouse.userId)?.name || null,
+          },
         };
 
-        // Save the new house to Firestore
         await setDoc(newHouseRef, housePayload);
-
-        // Update the local user object
-        const user = this.allUsers.find(u => u.id === newHouse.userId);
-        if (user) {
-          user.houses.push({
-            id: houseId,
-            number: newHouse.number,
-            active: newHouse.active,
-            createdAt: new Date()
-          });
-        }
-
-        // Create the pivot relationship
         await this.createOrUpdateHousePivot(newHouse.userId, houseId);
-
         this.utils.presentToast({ message: 'Casa agregada correctamente', color: 'success' });
-        await this.loadAllData(); // Reload data to refresh counts and lists
+        await this.loadAllData();
       }
     });
 
-    return await modal.present();
+    await modal.present();
   }
 
-  // Deletes a house and its pivot, with confirmation alert
   async deleteHouse(houseId: string, userId: string) {
     const alert = await this.alertController.create({
       header: 'Confirmar eliminación',
@@ -254,30 +230,180 @@ selectedSection: string = 'users';
             try {
               await this.firebaseService.deleteDocument(`places/${houseId}`);
               await this.deleteHousePivot(houseId);
-
-              const user = this.allUsers.find(u => u.id === userId);
-              if (user) {
-                user.houses = user.houses.filter((h: any) => h.id !== houseId);
-              }
-
               await this.loadAllData();
-              this.utils.presentToast({
-                message: 'Casa eliminada correctamente',
-                color: 'success'
-              });
+              this.utils.presentToast({ message: 'Casa eliminada correctamente', color: 'success' });
             } catch (error) {
-              console.error('Error eliminando casa:', error);
               this.presentAlert('Error', 'No se pudo eliminar la casa');
             }
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
-
     await alert.present();
   }
 
-  // Navigates to the profile page
+  // ===========================
+  //  MENSAJES / CHAT
+  // ===========================
+  async loadMessageUsers() {
+    if (!this.currentUid) {
+      console.error('No hay usuario admin autenticado');
+      return;
+    }
+    
+    try {
+      console.log('Cargando usuarios con mensajes para admin:', this.currentUid);
+      this.messageUsers = await this.chatService.getUsersWithMessages(this.currentUid);
+      
+      // Calcular mensajes no leídos para cada usuario
+      this.messageUsers.forEach(user => {
+        this.unreadCounts[user.id] = user.unread ? 1 : 0;
+      });
+      
+      console.log('Usuarios con mensajes cargados:', this.messageUsers);
+      
+      if (this.messageUsers.length === 0) {
+        console.log('No se encontraron usuarios con mensajes');
+      }
+    } catch (error) {
+      console.error('Error cargando usuarios con mensajes:', error);
+      this.utils.presentToast({
+        message: 'Error al cargar mensajes',
+        duration: 3000,
+        color: 'danger'
+      });
+    }
+  }
+
+  async openChat(user: any) {
+    console.log('Abriendo chat con usuario:', user);
+    this.selectedChatUser = user;
+    
+    if (!this.currentUid) {
+      console.error('No hay usuario admin autenticado');
+      return;
+    }
+
+    try {
+      // Cargar mensajes entre el admin y el usuario seleccionado
+      this.messages$ = this.firestore
+        .collection('messages', ref =>
+          ref
+            .where('participants', 'array-contains', this.currentUid)
+            .orderBy('timestamp', 'asc')
+        )
+        .valueChanges({ idField: 'id' })
+        .pipe(
+          map((messages: any[]) => {
+            const filteredMessages = messages.filter(msg => 
+              (msg.fromUid === this.currentUid && msg.toUid === user.id) ||
+              (msg.fromUid === user.id && msg.toUid === this.currentUid)
+            );
+            
+            console.log('Mensajes filtrados:', filteredMessages);
+            return filteredMessages;
+          })
+        );
+
+      // Marcar mensajes como leídos
+      await this.markMessagesAsRead(user.id);
+    } catch (error) {
+      console.error('Error abriendo chat:', error);
+    }
+  }
+
+  async markMessagesAsRead(userId: string) {
+    if (!this.currentUid) return;
+
+    try {
+      const messages = await this.chatService.getAdminMessages(this.currentUid);
+      const unreadMessages = messages.filter(msg => 
+        msg.fromUid === userId && 
+        msg.toUid === this.currentUid && 
+        !msg.read
+      );
+
+      for (const msg of unreadMessages) {
+        // Usa AngularFirestore en lugar de updateDoc directo
+        await this.firestore.doc(`messages/${msg.id}`).update({ 
+          read: true 
+        });
+      }
+    } catch (error) {
+      console.error('Error marcando mensajes como leídos:', error);
+    }
+  }
+
+  async sendMessage() {
+    if (!this.newMessage.trim()) {
+      this.utils.presentToast({
+        message: 'Escribe un mensaje',
+        duration: 2000,
+        color: 'warning'
+      });
+      return;
+    }
+
+    if (!this.selectedChatUser || !this.currentUid) {
+      this.utils.presentToast({
+        message: 'No hay conversación seleccionada',
+        duration: 3000,
+        color: 'danger'
+      });
+      return;
+    }
+
+    try {
+      const messageData = {
+        fromUid: this.currentUid,
+        toUid: this.selectedChatUser.id,
+        fromName: 'Administrador',
+        toName: this.selectedChatUser.name,
+        fromEmail: '',
+        toEmail: this.selectedChatUser.email,
+        message: this.newMessage.trim(),
+        timestamp: new Date(),
+        participants: [this.currentUid, this.selectedChatUser.id],
+        read: false,
+        type: 'admin_to_user'
+      };
+
+      await this.firestore.collection('messages').add(messageData);
+      
+      console.log('Mensaje enviado:', messageData);
+      this.newMessage = '';
+      
+      this.utils.presentToast({
+        message: 'Mensaje enviado',
+        duration: 2000,
+        color: 'success'
+      });
+
+      // Recargar la lista de usuarios para actualizar el último mensaje
+      await this.loadMessageUsers();
+      
+    } catch (error) {
+      console.error('Error enviando mensaje:', error);
+      this.utils.presentToast({
+        message: 'Error al enviar mensaje',
+        duration: 3000,
+        color: 'danger'
+      });
+    }
+  }
+
+  setSection(section: string) {
+    this.selectedSection = section;
+    if (section === 'messages') {
+      this.loadMessageUsers();
+    }
+  }
+
+  closeChat() {
+    this.selectedChatUser = null;
+    this.messages$ = undefined;
+  }
+
   navigateToProfile() {
     this.router.navigate(['/profile']);
   }
