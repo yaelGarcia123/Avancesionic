@@ -6,32 +6,8 @@ import { MainPage } from './main.page';
 const routes: Routes = [
   {
     path: '',
-    component: MainPage
-  },  {
-    path: 'home',
-    loadChildren: () => import('./home/home.module').then( m => m.HomePageModule)
+    component: MainPage,
   },
-  {
-    path: 'profile',
-    loadChildren: () => import('./profile/profile.module').then( m => m.ProfilePageModule)
-  },
-  {
-    path: 'admin',
-    loadChildren: () => import('./admin/admin.module').then( m => m.AdminPageModule)
-  },
-  {
-    path: 'admin-edit',
-    loadChildren: () => import('./admin-edit/admin-edit.module').then( m => m.AdminEditPageModule)
-  },
-  {
-    path: 'admin-add-house.page',
-    loadChildren: () => import('./admin-add-house.page/admin-add-house.page.module').then( m => m.AdminAddHousePagePageModule)
-  },
-  {
-    path: 'messages',
-    loadChildren: () => import('./messages/messages.module').then( m => m.MessagesPageModule)
-  }
-
 ];
 
 @NgModule({

@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { Place } from 'src/app/models/places';
-import { Firebase } from 'src/app/services/firebase';
+import { FirebaseServ } from 'src/app/services/firebase';
 import { Utils } from 'src/app/services/utils';
 import { ChatService } from 'src/app/services/chatservice';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -13,8 +13,7 @@ import { ModalController } from '@ionic/angular';
   standalone: false,
 })
 export class HomePage implements OnInit {
-
-  firebaseSvc = inject(Firebase);
+  firebaseSvc = inject(FirebaseServ);
   utilsSvc = inject(Utils);
   chatSvc = inject(ChatService);
 
@@ -24,7 +23,7 @@ export class HomePage implements OnInit {
   isModalOpen = false;
   unreadCount: number = 0;
 
-  constructor(private modalCtrl: ModalController) { }
+  constructor(private modalCtrl: ModalController) {}
 
   ngOnInit() {
     const auth = getAuth();
@@ -51,7 +50,7 @@ export class HomePage implements OnInit {
       this.utilsSvc.presentToast({
         message: this.error,
         duration: 3000,
-        color: 'danger'
+        color: 'danger',
       });
     } finally {
       this.loading = false;
@@ -93,7 +92,7 @@ export class HomePage implements OnInit {
     this.utilsSvc.presentToast({
       message: 'Opening Notices...',
       duration: 1500,
-      color: 'tertiary'
+      color: 'tertiary',
     });
   }
 }

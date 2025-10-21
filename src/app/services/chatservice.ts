@@ -1,42 +1,42 @@
-import { Injectable } from '@angular/core';
-import { 
-  collection, 
-  addDoc, 
+import { inject, Injectable } from '@angular/core';
+import {
+  collection,
+  addDoc,
   onSnapshot,
   updateDoc,
   doc,
   getDocs,
   getDoc,
-  Timestamp
+  Timestamp,
+  getFirestore,
 } from '@angular/fire/firestore';
-import { getFirestore } from '@angular/fire/firestore';
-import { getAuth } from 'firebase/auth';
+
+import { UserServ } from './user';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ChatService {
-  private firestore = getFirestore();
-
   // Removemos inject(Utils) y lo pasaremos como parámetro cuando sea necesario
   // O lo inyectamos en el constructor si realmente lo necesitamos en muchos métodos
-
+  userServ = inject(UserServ);
   constructor() {}
 
   // Enviar mensaje - MODIFICADO: ahora recibe utils como parámetro
-  async sendMessage(toUid: string, toName: string, toEmail: string, messageText: string, utils?: any): Promise<void> {
+  async sendMessage(
+    toUid: string,
+    toName: string,
+    toEmail: string,
+    messageText: string,
+    utils?: any
+  ): Promise<void> {
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      
+      const user = this.userServ.currentUser.value;
       if (!user) throw new Error('Usuario no autenticado');
 
-      const userDoc = await getDoc(doc(this.firestore, 'users', user.uid));
-      const userData = userDoc.data();
-
       const messageData = {
-        fromUid: user.uid,
-        fromName: userData?.['name'] || user.displayName || 'Usuario',
+        fromUid: user.id,
+        fromName: user.name || 'Usuario',
         fromEmail: user.email || '',
         toUid: toUid,
         toName: toName,
@@ -44,16 +44,16 @@ export class ChatService {
         message: messageText,
         timestamp: Timestamp.now(),
         read: false,
-        type: 'user_to_admin'
+        type: 'user_to_admin',
       };
 
-      await addDoc(collection(this.firestore, 'messages'), messageData);
-      
+      await addDoc(collection(getFirestore(), 'messages'), messageData);
+
       if (utils) {
         utils.presentToast({
           message: 'Mensaje enviado al administrador',
           duration: 2000,
-          color: 'success'
+          color: 'success',
         });
       }
     } catch (error) {
@@ -62,36 +62,40 @@ export class ChatService {
         utils.presentToast({
           message: 'Error al enviar mensaje',
           duration: 3000,
-          color: 'danger'
+          color: 'danger',
         });
       }
     }
   }
 
   // Obtener mensajes - VERSIÓN SIN CONSULTAS COMPLEJAS
-  getMessagesWithAdmin(adminUid: string, onMessagesUpdate: (messages: any[]) => void): () => void {
-    const auth = getAuth();
-    const user = auth.currentUser;
-    
+  getMessagesWithAdmin(
+    adminUid: string,
+    onMessagesUpdate: (messages: any[]) => void
+  ): () => void {
+    const user = this.userServ.currentUser.value;
+
     if (!user) {
       throw new Error('Usuario no autenticado');
     }
 
-    const messagesRef = collection(this.firestore, 'messages');
-    
+    const messagesRef = collection(getFirestore(), 'messages');
+
     return onSnapshot(messagesRef, (snapshot) => {
       const allMessages: any[] = [];
-      
+
       snapshot.forEach((doc) => {
         const messageData = doc.data();
-        
+
         if (
-          (messageData['fromUid'] === user.uid && messageData['toUid'] === adminUid) ||
-          (messageData['fromUid'] === adminUid && messageData['toUid'] === user.uid)
+          (messageData['fromUid'] === user.id &&
+            messageData['toUid'] === adminUid) ||
+          (messageData['fromUid'] === adminUid &&
+            messageData['toUid'] === user.id)
         ) {
           allMessages.push({
             id: doc.id,
-            ...messageData
+            ...messageData,
           });
         }
       });
@@ -109,17 +113,17 @@ export class ChatService {
   // Obtener administradores
   async getAdmins(): Promise<any[]> {
     try {
-      const usersRef = collection(this.firestore, 'users');
+      const usersRef = collection(getFirestore(), 'users');
       const snapshot = await getDocs(usersRef);
-      
+
       const admins: any[] = [];
-      
+
       snapshot.forEach((doc) => {
         const userData = doc.data();
         if (userData['admin'] === true) {
           admins.push({
             id: doc.id,
-            ...userData
+            ...userData,
           });
         }
       });
@@ -134,19 +138,18 @@ export class ChatService {
   // Obtener mensajes no leídos
   async getUnreadCount(): Promise<number> {
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      
+      const user = this.userServ.currentUser.value;
+
       if (!user) return 0;
 
-      const messagesRef = collection(this.firestore, 'messages');
+      const messagesRef = collection(getFirestore(), 'messages');
       const snapshot = await getDocs(messagesRef);
-      
+
       let unreadCount = 0;
-      
+
       snapshot.forEach((doc) => {
         const messageData = doc.data();
-        if (messageData['toUid'] === user.uid && messageData['read'] === false) {
+        if (messageData['toUid'] === user.id && messageData['read'] === false) {
           unreadCount++;
         }
       });
@@ -162,8 +165,8 @@ export class ChatService {
   async markMessagesAsRead(messageIds: string[]): Promise<void> {
     try {
       for (const messageId of messageIds) {
-        await updateDoc(doc(this.firestore, 'messages', messageId), { 
-          read: true 
+        await updateDoc(doc(getFirestore(), 'messages', messageId), {
+          read: true,
         });
       }
     } catch (error) {
@@ -173,7 +176,7 @@ export class ChatService {
 
   // Obtener la lista de usuarios que han enviado mensajes al admin
   async getUsersWithMessages(adminUid: string): Promise<any[]> {
-    const messagesRef = collection(this.firestore, 'messages');
+    const messagesRef = collection(getFirestore(), 'messages');
     const snapshot = await getDocs(messagesRef);
 
     const userMap = new Map<string, any>();
@@ -181,10 +184,13 @@ export class ChatService {
     snapshot.forEach((docSnap) => {
       const msg = docSnap.data();
       if (msg['toUid'] === adminUid || msg['fromUid'] === adminUid) {
-        const userId = msg['fromUid'] === adminUid ? msg['toUid'] : msg['fromUid'];
-        const userName = msg['fromUid'] === adminUid ? msg['toName'] : msg['fromName'];
-        const userEmail = msg['fromUid'] === adminUid ? msg['toEmail'] : msg['fromEmail'];
-        
+        const userId =
+          msg['fromUid'] === adminUid ? msg['toUid'] : msg['fromUid'];
+        const userName =
+          msg['fromUid'] === adminUid ? msg['toName'] : msg['fromName'];
+        const userEmail =
+          msg['fromUid'] === adminUid ? msg['toEmail'] : msg['fromEmail'];
+
         if (userId !== adminUid) {
           if (!userMap.has(userId)) {
             userMap.set(userId, {
@@ -193,7 +199,7 @@ export class ChatService {
               email: userEmail || 'Sin email',
               lastMessage: msg['message'],
               timestamp: msg['timestamp']?.toDate() || new Date(),
-              unread: msg['toUid'] === adminUid && !msg['read']
+              unread: msg['toUid'] === adminUid && !msg['read'],
             });
           } else {
             const existingUser = userMap.get(userId);
@@ -207,24 +213,29 @@ export class ChatService {
       }
     });
 
-    return Array.from(userMap.values()).sort((a, b) => b.timestamp - a.timestamp);
+    return Array.from(userMap.values()).sort(
+      (a, b) => b.timestamp - a.timestamp
+    );
   }
 
   // Nuevo método para obtener mensajes del admin
   async getAdminMessages(adminUid: string): Promise<any[]> {
     try {
-      const messagesRef = collection(this.firestore, 'messages');
+      const messagesRef = collection(getFirestore(), 'messages');
       const snapshot = await getDocs(messagesRef);
-      
+
       const messages: any[] = [];
-      
+
       snapshot.forEach((doc) => {
         const messageData = doc.data();
-        if (messageData['toUid'] === adminUid || messageData['fromUid'] === adminUid) {
+        if (
+          messageData['toUid'] === adminUid ||
+          messageData['fromUid'] === adminUid
+        ) {
           messages.push({
             id: doc.id,
             ...messageData,
-            timestamp: messageData['timestamp']?.toDate() || new Date()
+            timestamp: messageData['timestamp']?.toDate() || new Date(),
           });
         }
       });

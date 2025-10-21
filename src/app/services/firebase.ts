@@ -1,79 +1,35 @@
 import { inject, Injectable } from '@angular/core';
-import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
-import { provideFirestore } from '@angular/fire/firestore';
-import { environment } from '../../environments/environment';
 import {
-  updateDoc,
-  deleteDoc,
-  getFirestore,
-  setDoc,
-  doc,
   addDoc,
-  getDoc,
   collection,
   collectionData,
-  query,
+  deleteDoc,
+  doc,
+  getDoc,
   getDocs,
-  where,
   Firestore,
+  query,
+  setDoc,
+  updateDoc,
+  getFirestore,
+  where,
 } from '@angular/fire/firestore';
 import { deleteUser as firebaseDeleteUser } from 'firebase/auth';
 
 import {
-  getAuth,
-  signInWithEmailAndPassword,
-  signOut,
-  createUserWithEmailAndPassword,
-  updateProfile,
   updateEmail as fbUpdateEmail,
   updatePassword as fbUpdatePassword,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-  User,
+  getAuth,
+  signOut,
 } from 'firebase/auth';
-import { user } from '../models/user.model';
-import { Observable } from 'rxjs';
+import { UserSystem } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root',
 })
-export class Firebase {
-  private auth = inject(AngularFireAuth);
-  firestone = inject(AngularFirestore);
-
-  getAuth() {
-    return getAuth();
-  }
-
-  getUser() {
-    return this.auth.currentUser;
-  }
-
-  // Function to sign in
-  signIn(user: user) {
-    return signInWithEmailAndPassword(getAuth(), user.email, user.password);
-  }
-
-  // Function to register
-  signUp(user: user) {
-    return createUserWithEmailAndPassword(getAuth(), user.email, user.password);
-  }
-
-  // Function to update profile
-  updateUser(displayName: string) {
-    return updateProfile(getAuth().currentUser, { displayName });
-  }
-
-  // Re-authenticate the user
-  async reauthenticateUser(email: string, password: string): Promise<void> {
-    const user = getAuth().currentUser;
-    if (!user) throw new Error('No authenticated user');
-
-    const credential = EmailAuthProvider.credential(email, password);
-    await reauthenticateWithCredential(user, credential);
-  }
+export class FirebaseServ {
+  firestore = inject(AngularFirestore);
 
   // 🔹 Firestore operations (Database)
 
@@ -144,7 +100,7 @@ export class Firebase {
     );
 
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => {
+    return querySnapshot.docs.map((doc) => {
       return {
         id: doc.id,
         ...doc.data(),
@@ -167,7 +123,7 @@ export class Firebase {
     );
 
     const querySnapshot = await getDocs(q); // Executes the query and retrieves matching documents
-    return querySnapshot.docs.map(doc => {
+    return querySnapshot.docs.map((doc) => {
       return {
         id: doc.id,
         ...doc.data(), // Spread all properties from the document into the final object
@@ -195,33 +151,42 @@ export class Firebase {
     return await signOut(auth);
   }
   async getAdmins() {
-  const q = query(
-    collection(getFirestore(), 'users'),
-    where('admin', '==', true)
-  );
+    const q = query(
+      collection(getFirestore(), 'users'),
+      where('admin', '==', true)
+    );
 
-  const querySnapshot = await getDocs(q);
-  const admins: any[] = [];
-  
-  querySnapshot.forEach((doc) => {
-    admins.push({
-      id: doc.id,
-      ...doc.data()
+    const querySnapshot = await getDocs(q);
+    const admins: any[] = [];
+
+    querySnapshot.forEach((doc) => {
+      admins.push({
+        id: doc.id,
+        ...doc.data(),
+      });
     });
-  });
 
-  return admins;
-}
+    return admins;
+  }
 
-// Obtener mensajes no leídos
-async getUnreadMessagesCount(userId: string): Promise<number> {
-  const q = query(
-    collection(getFirestore(), 'messages'),
-    where('to.uid', '==', userId),
-    where('read', '==', false)
-  );
+  // Obtener mensajes no leídos
+  async getUnreadMessagesCount(userId: string): Promise<number> {
+    const q = query(
+      collection(getFirestore(), 'messages'),
+      where('to.uid', '==', userId),
+      where('read', '==', false)
+    );
 
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.size;
-}
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.size;
+  }
+
+  async getUserByUid(uid: string): Promise<UserSystem | null> {
+    const userDoc = await getDoc(doc(getFirestore(), `users/${uid}`));
+    if (userDoc.exists()) {
+      return userDoc.data() as UserSystem;
+    } else {
+      return null;
+    }
+  }
 }

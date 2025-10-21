@@ -1,7 +1,11 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AlertController, LoadingController, ModalController } from '@ionic/angular';
-import { Firebase } from 'src/app/services/firebase';
+import {
+  AlertController,
+  LoadingController,
+  ModalController,
+} from '@ionic/angular';
+import { FirebaseServ } from 'src/app/services/firebase';
 import { AdminEditPage } from '../admin-edit/admin-edit.page';
 import { AdminAddHousePagePage } from '../admin-add-house.page/admin-add-house.page.page';
 import { HouseResident } from 'src/app/models/HouseResident';
@@ -10,8 +14,15 @@ import { getAuth } from 'firebase/auth';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ChatService } from 'src/app/services/chatservice';
-import { doc, getFirestore, collection, setDoc, deleteDoc } from 'firebase/firestore';
+import {
+  doc,
+  getFirestore,
+  collection,
+  setDoc,
+  deleteDoc,
+} from '@angular/fire/firestore';
 import { Utils } from 'src/app/services/utils';
+import { UserServ } from 'src/app/services/user';
 
 @Component({
   selector: 'app-admin',
@@ -42,25 +53,18 @@ export class AdminPage implements OnInit {
   newMessage: string = '';
   unreadCounts: { [userId: string]: number } = {};
 
-  private db = getFirestore();
-
-  constructor(
-    private modalCtrl: ModalController,
-    private router: Router,
-    private firebaseService: Firebase,
-    private alertController: AlertController,
-    private loadingController: LoadingController,
-    private utils: Utils,
-    private chatService: ChatService,
-    private firestore: AngularFirestore // Inyectado en el constructor
-  ) {}
+  firebaseSvc = inject(FirebaseServ);
+  userServ = inject(UserServ);
+  utils = inject(Utils);
+  chatService = inject(ChatService);
+  constructor(private router: Router) {}
 
   ngOnInit() {
-    const auth = getAuth();
-    this.currentUid = auth.currentUser?.uid || null;
+    const user = this.userServ.currentUser.value;
+    this.currentUid = user?.id || null;
 
-    this.loadAllData(); // cargar usuarios y casas
-    if (this.currentUid) this.loadMessageUsers(); // cargar usuarios con mensajes
+    /*  this.loadAllData(); // cargar usuarios y casas
+    if (this.currentUid) this.loadMessageUsers(); // cargar usuarios con mensajes */
   }
 
   // ===========================
@@ -68,11 +72,13 @@ export class AdminPage implements OnInit {
   // ===========================
   async loadAllData() {
     this.loading = true;
-    const loading = await this.loadingController.create({ message: 'Cargando datos...' });
+    const loading = await this.utils.alertCtrl.create({
+      message: 'Cargando datos...',
+    });
     await loading.present();
 
     try {
-      const usersDocs = await this.firebaseService.getAllUsers();
+      const usersDocs = await this.firebaseSvc.getAllUsers();
       this.allUsers = [];
       this.totalHouses = 0;
       this.activeHouses = 0;
@@ -88,7 +94,7 @@ export class AdminPage implements OnInit {
           showHouses: false,
         };
 
-        const userHouses = await this.firebaseService.getHousesByUserId(userDoc.id);
+        const userHouses = await this.firebaseSvc.getHousesByUserId(userDoc.id);
         user.houses = userHouses.map((house: any) => {
           this.totalHouses++;
           if (house.active) this.activeHouses++;
@@ -121,34 +127,44 @@ export class AdminPage implements OnInit {
 
     const term = this.searchTerm.toLowerCase();
     this.filteredUsers = this.allUsers
-      .filter(user => {
-        const userMatch = user.name.toLowerCase().includes(term) || user.email.toLowerCase().includes(term);
-        const houseMatch = user.houses.some((house: any) => house.number.toLowerCase().includes(term));
+      .filter((user) => {
+        const userMatch =
+          user.name.toLowerCase().includes(term) ||
+          user.email.toLowerCase().includes(term);
+        const houseMatch = user.houses.some((house: any) =>
+          house.number.toLowerCase().includes(term)
+        );
         return userMatch || houseMatch;
       })
-      .map(user => ({
+      .map((user) => ({
         ...user,
-        showHouses: user.houses.some((house: any) => house.number.toLowerCase().includes(term)),
+        showHouses: user.houses.some((house: any) =>
+          house.number.toLowerCase().includes(term)
+        ),
       }));
   }
 
   toggleUserHouses(userId: string) {
-    this.filteredUsers = this.filteredUsers.map(user => ({
+    this.filteredUsers = this.filteredUsers.map((user) => ({
       ...user,
       showHouses: user.id === userId ? !user.showHouses : user.showHouses,
     }));
   }
 
   async presentAlert(header: string, message: string) {
-    const alert = await this.alertController.create({ header, message, buttons: ['OK'] });
+    const alert = await this.utils.alertCtrl.create({
+      header,
+      message,
+      buttons: ['OK'],
+    });
     await alert.present();
   }
 
   private async createOrUpdateHousePivot(userId: string, houseId: string) {
-    const pivotRef = doc(this.db, 'homeowners', houseId);
+    const pivotRef = doc(getFirestore(), 'homeowners', houseId);
     const pivotData: HouseResident = {
-      userRef: doc(this.db, 'users', userId),
-      houseRef: doc(this.db, 'places', houseId),
+      userRef: doc(getFirestore(), 'users', userId),
+      houseRef: doc(getFirestore(), 'places', houseId),
       role: 'propietario',
       createdAt: new Date(),
     };
@@ -156,26 +172,28 @@ export class AdminPage implements OnInit {
   }
 
   private async deleteHousePivot(houseId: string) {
-    const pivotRef = doc(this.db, 'homeowners', houseId);
+    const pivotRef = doc(getFirestore(), 'homeowners', houseId);
     await deleteDoc(pivotRef);
   }
 
   async openEditHouse(house: any, userId: string) {
-    const modal = await this.modalCtrl.create({
+    const modal = await this.utils.modalCtrl.create({
       component: AdminEditPage,
       componentProps: { house: { ...house } },
     });
 
-    modal.onDidDismiss().then(async result => {
+    modal.onDidDismiss().then(async (result) => {
       if (result.data) {
         const updatedHouse = result.data;
-        await this.firebaseService.updateDocument(`places/${updatedHouse.id}`, {
+        await this.firebaseSvc.updateDocument(`places/${updatedHouse.id}`, {
           number: updatedHouse.number,
           active: updatedHouse.active,
         });
-        const user = this.allUsers.find(u => u.id === userId);
+        const user = this.allUsers.find((u) => u.id === userId);
         if (user) {
-          const idx = user.houses.findIndex((h: any) => h.id === updatedHouse.id);
+          const idx = user.houses.findIndex(
+            (h: any) => h.id === updatedHouse.id
+          );
           if (idx > -1) user.houses[idx] = updatedHouse;
         }
         await this.createOrUpdateHousePivot(userId, updatedHouse.id);
@@ -186,15 +204,15 @@ export class AdminPage implements OnInit {
   }
 
   async addHouse() {
-    const modal = await this.modalCtrl.create({
+    const modal = await this.utils.modalCtrl.create({
       component: AdminAddHousePagePage,
       componentProps: { allUsers: this.allUsers },
     });
 
-    modal.onDidDismiss().then(async result => {
+    modal.onDidDismiss().then(async (result) => {
       if (result.data) {
         const newHouse = result.data;
-        const newHouseRef = doc(collection(this.db, 'places'));
+        const newHouseRef = doc(collection(getFirestore(), 'places'));
         const houseId = newHouseRef.id;
 
         const housePayload = {
@@ -202,14 +220,18 @@ export class AdminPage implements OnInit {
           active: newHouse.active,
           createdAt: new Date(),
           user: {
-            ref: doc(this.db, 'users', newHouse.userId),
-            name: this.allUsers.find(u => u.id === newHouse.userId)?.name || null,
+            ref: doc(getFirestore(), 'users', newHouse.userId),
+            name:
+              this.allUsers.find((u) => u.id === newHouse.userId)?.name || null,
           },
         };
 
         await setDoc(newHouseRef, housePayload);
         await this.createOrUpdateHousePivot(newHouse.userId, houseId);
-        this.utils.presentToast({ message: 'Casa agregada correctamente', color: 'success' });
+        this.utils.presentToast({
+          message: 'Casa agregada correctamente',
+          color: 'success',
+        });
         await this.loadAllData();
       }
     });
@@ -218,7 +240,7 @@ export class AdminPage implements OnInit {
   }
 
   async deleteHouse(houseId: string, userId: string) {
-    const alert = await this.alertController.create({
+    const alert = await this.utils.alertCtrl.create({
       header: 'Confirmar eliminación',
       message: '¿Seguro que deseas eliminar esta casa?',
       buttons: [
@@ -228,10 +250,13 @@ export class AdminPage implements OnInit {
           role: 'destructive',
           handler: async () => {
             try {
-              await this.firebaseService.deleteDocument(`places/${houseId}`);
+              await this.firebaseSvc.deleteDocument(`places/${houseId}`);
               await this.deleteHousePivot(houseId);
               await this.loadAllData();
-              this.utils.presentToast({ message: 'Casa eliminada correctamente', color: 'success' });
+              this.utils.presentToast({
+                message: 'Casa eliminada correctamente',
+                color: 'success',
+              });
             } catch (error) {
               this.presentAlert('Error', 'No se pudo eliminar la casa');
             }
@@ -243,24 +268,29 @@ export class AdminPage implements OnInit {
   }
 
   //  MENSAJES chat
- 
+
   async loadMessageUsers() {
     if (!this.currentUid) {
       console.error('No hay usuario admin autenticado');
       return;
     }
-    
+
     try {
-      console.log('Cargando usuarios con mensajes para admin:', this.currentUid);
-      this.messageUsers = await this.chatService.getUsersWithMessages(this.currentUid);
-      
+      console.log(
+        'Cargando usuarios con mensajes para admin:',
+        this.currentUid
+      );
+      this.messageUsers = await this.chatService.getUsersWithMessages(
+        this.currentUid
+      );
+
       // Calcular mensajes no leídos para cada usuario
-      this.messageUsers.forEach(user => {
+      this.messageUsers.forEach((user) => {
         this.unreadCounts[user.id] = user.unread ? 1 : 0;
       });
-      
+
       console.log('Usuarios con mensajes cargados:', this.messageUsers);
-      
+
       if (this.messageUsers.length === 0) {
         console.log('No se encontraron usuarios con mensajes');
       }
@@ -269,7 +299,7 @@ export class AdminPage implements OnInit {
       this.utils.presentToast({
         message: 'Error al cargar mensajes',
         duration: 3000,
-        color: 'danger'
+        color: 'danger',
       });
     }
   }
@@ -277,7 +307,7 @@ export class AdminPage implements OnInit {
   async openChat(user: any) {
     console.log('Abriendo chat con usuario:', user);
     this.selectedChatUser = user;
-    
+
     if (!this.currentUid) {
       console.error('No hay usuario admin autenticado');
       return;
@@ -285,8 +315,8 @@ export class AdminPage implements OnInit {
 
     try {
       // Cargar mensajes entre el admin y el usuario seleccionado
-      this.messages$ = this.firestore
-        .collection('messages', ref =>
+      this.messages$ = this.firebaseSvc.firestore
+        .collection('messages', (ref) =>
           ref
             .where('participants', 'array-contains', this.currentUid)
             .orderBy('timestamp', 'asc')
@@ -294,11 +324,12 @@ export class AdminPage implements OnInit {
         .valueChanges({ idField: 'id' })
         .pipe(
           map((messages: any[]) => {
-            const filteredMessages = messages.filter(msg => 
-              (msg.fromUid === this.currentUid && msg.toUid === user.id) ||
-              (msg.fromUid === user.id && msg.toUid === this.currentUid)
+            const filteredMessages = messages.filter(
+              (msg) =>
+                (msg.fromUid === this.currentUid && msg.toUid === user.id) ||
+                (msg.fromUid === user.id && msg.toUid === this.currentUid)
             );
-            
+
             console.log('Mensajes filtrados:', filteredMessages);
             return filteredMessages;
           })
@@ -316,16 +347,15 @@ export class AdminPage implements OnInit {
 
     try {
       const messages = await this.chatService.getAdminMessages(this.currentUid);
-      const unreadMessages = messages.filter(msg => 
-        msg.fromUid === userId && 
-        msg.toUid === this.currentUid && 
-        !msg.read
+      const unreadMessages = messages.filter(
+        (msg) =>
+          msg.fromUid === userId && msg.toUid === this.currentUid && !msg.read
       );
 
       for (const msg of unreadMessages) {
         // Usa AngularFirestore en lugar de updateDoc directo
-        await this.firestore.doc(`messages/${msg.id}`).update({ 
-          read: true 
+        await this.firebaseSvc.firestore.doc(`messages/${msg.id}`).update({
+          read: true,
         });
       }
     } catch (error) {
@@ -338,7 +368,7 @@ export class AdminPage implements OnInit {
       this.utils.presentToast({
         message: 'Escribe un mensaje',
         duration: 2000,
-        color: 'warning'
+        color: 'warning',
       });
       return;
     }
@@ -347,7 +377,7 @@ export class AdminPage implements OnInit {
       this.utils.presentToast({
         message: 'No hay conversación seleccionada',
         duration: 3000,
-        color: 'danger'
+        color: 'danger',
       });
       return;
     }
@@ -364,29 +394,28 @@ export class AdminPage implements OnInit {
         timestamp: new Date(),
         participants: [this.currentUid, this.selectedChatUser.id],
         read: false,
-        type: 'admin_to_user'
+        type: 'admin_to_user',
       };
 
-      await this.firestore.collection('messages').add(messageData);
-      
+      await this.firebaseSvc.firestore.collection('messages').add(messageData);
+
       console.log('Mensaje enviado:', messageData);
       this.newMessage = '';
-      
+
       this.utils.presentToast({
         message: 'Mensaje enviado',
         duration: 2000,
-        color: 'success'
+        color: 'success',
       });
 
       // Recargar la lista de usuarios para actualizar el último mensaje
       await this.loadMessageUsers();
-      
     } catch (error) {
       console.error('Error enviando mensaje:', error);
       this.utils.presentToast({
         message: 'Error al enviar mensaje',
         duration: 3000,
-        color: 'danger'
+        color: 'danger',
       });
     }
   }

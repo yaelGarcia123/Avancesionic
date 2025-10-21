@@ -1,7 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import {
+  AlertController,
   LoadingController,
+  ModalController,
   ToastController,
   ToastOptions,
 } from '@ionic/angular';
@@ -12,6 +14,8 @@ import {
 export class Utils {
   loadingCtrl = inject(LoadingController);
   toastCtlr = inject(ToastController);
+  alertCtrl = inject(AlertController);
+  modalCtrl = inject(ModalController);
   router = inject(Router);
 
   // Crear loading y presentarlo automáticamente

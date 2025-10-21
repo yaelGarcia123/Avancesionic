@@ -1,7 +1,8 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { user } from 'src/app/models/user.model';
-import { Firebase } from 'src/app/services/firebase';
+import { UserSystem } from 'src/app/models/user.model';
+import { AuthServ } from 'src/app/services/auth';
+import { UserServ } from 'src/app/services/user';
 import { Utils } from 'src/app/services/utils';
 
 @Component({
@@ -11,13 +12,12 @@ import { Utils } from 'src/app/services/utils';
   standalone: false,
 })
 export class AuthPage implements OnInit {
-
   form = new FormGroup({
     email: new FormControl('', [Validators.required, Validators.email]),
     password: new FormControl('', [Validators.required]),
   });
 
-  firebaseSvc = inject(Firebase);
+  authServ = inject(AuthServ);
   utilsSvc = inject(Utils);
 
   ngOnInit() {}
@@ -29,11 +29,11 @@ export class AuthPage implements OnInit {
     const loading = await this.utilsSvc.showLoading();
 
     try {
-       // Try to sign in with Firebase Authentication
-      const res = await this.firebaseSvc.signIn(this.form.value as user);
+      // Try to sign in with Firebase Authentication
+      const res = await this.authServ.signIn(this.form.value as UserSystem);
       await this.getUserInfo(res.user.uid);
     } catch (error: any) {
-      console.log("❌ Login error:", error);
+      console.log('❌ Login error:', error);
       this.utilsSvc.presentToast({
         message: error.message,
         duration: 2500,
@@ -51,7 +51,7 @@ export class AuthPage implements OnInit {
     const loading = await this.utilsSvc.showLoading();
 
     try {
-      const userData = await this.firebaseSvc.getDocument(`users/${uid}`) as user;
+      let userData = await this.authServ.getCurrentUser();
       const completeUser = { ...userData, uid }; // Creates a new object that copies all properties from userData and adds/ensures the uid property
 
       this.utilsSvc.saveLocalStorage('users', completeUser);

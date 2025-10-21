@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Utils } from 'src/app/services/utils';
-import { Firebase } from 'src/app/services/firebase';
+import { FirebaseServ } from 'src/app/services/firebase';
 import { AlertController } from '@ionic/angular';
+import { AuthServ } from 'src/app/services/auth';
 
 @Component({
   selector: 'app-profile',
@@ -14,11 +15,11 @@ export class ProfilePage implements OnInit {
   userData: any = null; // Stores the current user data
   isEditing = false; // Flag to know if the user is in edit mode
   userForm: FormGroup;
-
+  firebaseSvc = inject(FirebaseServ);
+  authServ = inject(AuthServ);
   constructor(
     private utilsSvc: Utils,
     private fb: FormBuilder,
-    private firebaseSvc: Firebase,
     private alertController: AlertController
   ) {
     // Initialize reactive form
@@ -66,15 +67,15 @@ export class ProfilePage implements OnInit {
     const loading = await this.utilsSvc.showLoading();
 
     try {
-      const user = await this.firebaseSvc.getUser();
+      const user = await this.authServ.getUser();
       if (!user) throw new Error('User not authenticated');
 
       // 🔐 Reauthenticate before making sensitive changes
-      await this.firebaseSvc.reauthenticateUser(
+      await this.authServ.reauthenticateUser(
         this.userData.email,
         this.userForm.value.currentPassword
       );
-      
+
       const updatedData: any = { name: this.userForm.value.name };
 
       // Update email if changed

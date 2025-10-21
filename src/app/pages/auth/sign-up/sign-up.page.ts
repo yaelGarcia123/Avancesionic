@@ -1,7 +1,8 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { user } from 'src/app/models/user.model';
-import { Firebase } from 'src/app/services/firebase';
+import { UserSystem } from 'src/app/models/user.model';
+import { AuthServ } from 'src/app/services/auth';
+import { FirebaseServ } from 'src/app/services/firebase';
 import { Utils } from 'src/app/services/utils';
 
 @Component({
@@ -11,7 +12,6 @@ import { Utils } from 'src/app/services/utils';
   standalone: false,
 })
 export class SignUpPage implements OnInit {
-
   form = new FormGroup({
     uid: new FormControl(''),
     email: new FormControl('', [Validators.required, Validators.email]),
@@ -19,7 +19,8 @@ export class SignUpPage implements OnInit {
     name: new FormControl('', [Validators.required, Validators.minLength(4)]),
   });
 
-  firebaseSvc = inject(Firebase);
+  firebaseSvc = inject(FirebaseServ);
+  authServ = inject(AuthServ);
   utilsSvc = inject(Utils);
 
   ngOnInit() {}
@@ -32,13 +33,13 @@ export class SignUpPage implements OnInit {
 
     try {
       // Create user in Firebase Auth
-      const res = await this.firebaseSvc.signUp(this.form.value as user);
+      const res = await this.authServ.signUp(this.form.value as UserSystem);
 
       // Save UID in the form
       this.form.controls.uid.setValue(res.user.uid);
 
       // Update displayName in Firebase
-      await this.firebaseSvc.updateUser(this.form.value.name);
+      await this.authServ.updateUser(this.form.value.name);
 
       // Save user info in Firestore
       await this.setUserInfo(res.user.uid);
