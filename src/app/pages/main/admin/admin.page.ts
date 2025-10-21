@@ -23,6 +23,7 @@ import {
 } from '@angular/fire/firestore';
 import { Utils } from 'src/app/services/utils';
 import { UserServ } from 'src/app/services/user';
+import { AuthServ } from 'src/app/services/auth';
 
 @Component({
   selector: 'app-admin',
@@ -55,16 +56,16 @@ export class AdminPage implements OnInit {
 
   firebaseSvc = inject(FirebaseServ);
   userServ = inject(UserServ);
+  authServ = inject(AuthServ);
   utils = inject(Utils);
   chatService = inject(ChatService);
   constructor(private router: Router) {}
 
-  ngOnInit() {
-    const user = this.userServ.currentUser.value;
-    this.currentUid = user?.id || null;
+  async ngOnInit() {
+    this.currentUid = (await this.authServ.getUser()).uid;
 
-    /*  this.loadAllData(); // cargar usuarios y casas
-    if (this.currentUid) this.loadMessageUsers(); // cargar usuarios con mensajes */
+    this.loadAllData(); // cargar usuarios y casas
+    this.loadMessageUsers(); // cargar usuarios con mensajes
   }
 
   // ===========================
