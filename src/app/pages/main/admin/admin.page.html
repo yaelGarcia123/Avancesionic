@@ -1,121 +1,155 @@
-<app-headeradmin title="ADMINISTRADOR"></app-headeradmin>
+
 
 <ion-content>
-  <div class="main-content">
-    
-    <!-- Action buttons -->
-    <div class="action-buttons">
-      <ion-button class="action-btn" color="primary" (click)="loadAllData()">
-        <ion-icon name="refresh" slot="start"></ion-icon>
-        Refresh Data
-      </ion-button>
-      
-      <ion-button class="action-btn" color="success">
-        <ion-icon name="download" slot="start"></ion-icon>
-        Export Data
-      </ion-button>
+  <app-headeradmin title="ADMINISTRADOR"></app-headeradmin>
+  <div class="admin-layout">
 
-      <ion-button class="action-btn" color="primary" (click)="addHouse()">
-        <ion-icon name="home" slot="start"></ion-icon>
-        Places
-      </ion-button>
+    <!-- ===== Sidebar ===== -->
+    <div class="sidebar">
+      <h3>Panel</h3>
+      <ul>
+        <li 
+          [class.active]="selectedSection === 'users'" 
+          (click)="selectedSection = 'users'">
+          <ion-icon name="people-outline"></ion-icon>
+          Usuarios y Casas
+        </li>
+
+        <li 
+          [class.active]="selectedSection === 'messages'" 
+          (click)="selectedSection = 'messages'">
+          <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
+          Mensajes
+        </li>
+      </ul>
     </div>
 
-    <!-- Search bar -->
-    <ion-searchbar 
-      placeholder="Search user or house..." 
-      [(ngModel)]="searchTerm" 
-      (ionInput)="filterData()"
-      animated
-      debounce="300">
-    </ion-searchbar>
+    <!-- ===== Main Content ===== -->
+    <div class="main-content">
 
-    <!-- Quick stats -->
-    <div class="stats-container">
-      <ion-card color="primary">
-        <ion-card-header>
-          <ion-card-title>{{ filteredUsers.length }}</ion-card-title>
-          <ion-card-subtitle>Total Users</ion-card-subtitle>
-        </ion-card-header>
-      </ion-card>
+      <!-- 🏠 Sección: Usuarios y Casas -->
+      <div *ngIf="selectedSection === 'users'" class="content-wrapper">
+        <h1 class="section-title">Usuarios y Casas</h1>
 
-      <ion-card color="secondary">
-        <ion-card-header>
-          <ion-card-title>{{ totalHouses }}</ion-card-title>
-          <ion-card-subtitle>Registered Houses</ion-card-subtitle>
-        </ion-card-header>
-      </ion-card>
-
-      <ion-card color="tertiary">
-        <ion-card-header>
-          <ion-card-title>{{ activeHouses }}</ion-card-title>
-          <ion-card-subtitle>Active Houses</ion-card-subtitle>
-        </ion-card-header>
-      </ion-card>
-    </div>
-
-    <!-- Users list with their houses -->
-    <div class="users-list">
-      <h2>Users and Their Properties</h2>
-      
-      <!-- Show loading state -->
-      <div *ngIf="loading" class="loading">
-        <ion-spinner></ion-spinner>
-        <p>Loading data...</p>
-      </div>
-
-      <!-- Show empty state if no results -->
-      <div *ngIf="!loading && filteredUsers.length === 0" class="empty-state">
-        <ion-icon name="people-outline" size="large"></ion-icon>
-        <h3>No results found</h3>
-        <p>Try different search terms</p>
-      </div>
-
-      <!-- Users list -->
-      <ion-list *ngIf="!loading && filteredUsers.length > 0">
-        <ion-item-group *ngFor="let user of filteredUsers">
-          <!-- User header with toggle -->
-          <ion-item-divider color="light" (click)="toggleUserHouses(user.id)">
-            <ion-label>
-              <h2>{{ user.name }}</h2>
-              <p>{{ user.email }} • {{ user.houses.length }} propertie(s)</p>
-            </ion-label>
-            <ion-button fill="clear" slot="end">
-              <ion-icon 
-                [name]="user.showHouses ? 'chevron-up-outline' : 'chevron-down-outline'">
-              </ion-icon>
-            </ion-button>
-          </ion-item-divider>
+        <!-- Botones de acción -->
+        <div class="action-buttons">
+          <ion-button class="action-btn" color="primary" (click)="loadAllData()">
+            <ion-icon name="refresh" slot="start"></ion-icon>
+            Refresh Data
+          </ion-button>
           
-          <!-- User houses (only visible if showHouses is true) -->
-          <div *ngIf="user.showHouses">
-            <ion-item-sliding *ngFor="let house of user.houses" class="house-item">
-              <ion-item>
-                <ion-icon name="home" slot="start" [color]="house.active ? 'success' : 'medium'"></ion-icon>
-                <ion-label>
-                  <h3>{{ house.number }}</h3>
-                  <p>Status: {{ house.active ? 'Active' : 'Inactive' }}</p>
-                </ion-label>
-                <ion-badge [color]="house.active ? 'success' : 'medium'" slot="end">
-                  {{ house.active ? 'Active' : 'Inactive' }}
-                </ion-badge>
-              </ion-item>
-              
-              <!-- Slide options for edit and delete -->
-              <ion-item-options side="end">
-                <ion-item-option color="primary" (click)="openEditHouse(house, user.id)">
-                  <ion-icon slot="icon-only" name="create"></ion-icon>
-                </ion-item-option>
+          <ion-button class="action-btn" color="success">
+            <ion-icon name="download" slot="start"></ion-icon>
+            Export Data
+          </ion-button>
 
-                <ion-item-option color="danger" (click)="deleteHouse(house.id, user.id)">
-                  <ion-icon slot="icon-only" name="trash"></ion-icon>
-                </ion-item-option>
-              </ion-item-options>
-            </ion-item-sliding>
+          <ion-button class="action-btn" color="primary" (click)="addHouse()">
+            <ion-icon name="home" slot="start"></ion-icon>
+            Places
+          </ion-button>
+        </div>
+
+        <!-- Barra de búsqueda -->
+        <ion-searchbar 
+          placeholder="Buscar usuario o casa..." 
+          [(ngModel)]="searchTerm" 
+          (ionInput)="filterData()"
+          animated
+          debounce="300">
+        </ion-searchbar>
+
+        <!-- Estadísticas rápidas -->
+        <div class="stats-container">
+          <ion-card color="primary">
+            <ion-card-header>
+              <ion-card-title>{{ filteredUsers.length }}</ion-card-title>
+              <ion-card-subtitle>Total Usuarios</ion-card-subtitle>
+            </ion-card-header>
+          </ion-card>
+
+          <ion-card color="secondary">
+            <ion-card-header>
+              <ion-card-title>{{ totalHouses }}</ion-card-title>
+              <ion-card-subtitle>Casas Registradas</ion-card-subtitle>
+            </ion-card-header>
+          </ion-card>
+
+          <ion-card color="tertiary">
+            <ion-card-header>
+              <ion-card-title>{{ activeHouses }}</ion-card-title>
+              <ion-card-subtitle>Casas Activas</ion-card-subtitle>
+            </ion-card-header>
+          </ion-card>
+        </div>
+
+        <!-- Lista de usuarios -->
+        <div class="users-list-box">
+          <h2>Usuarios y sus Propiedades</h2>
+
+          <div *ngIf="loading" class="loading">
+            <ion-spinner></ion-spinner>
+            <p>Cargando datos...</p>
           </div>
-        </ion-item-group>
-      </ion-list>
-    </div>
 
+          <div *ngIf="!loading && filteredUsers.length === 0" class="empty-state">
+            <ion-icon name="people-outline" size="large"></ion-icon>
+            <h3>No se encontraron resultados</h3>
+            <p>Intenta con otros términos de búsqueda</p>
+          </div>
+
+          <ion-list *ngIf="!loading && filteredUsers.length > 0" class="user-list-scroll">
+            <ion-item-group *ngFor="let user of filteredUsers">
+              <ion-item-divider color="light" (click)="toggleUserHouses(user.id)">
+                <ion-label>
+                  <h2>{{ user.name }}</h2>
+                  <p>{{ user.email }} • {{ user.houses.length }} propiedad(es)</p>
+                </ion-label>
+                <ion-button fill="clear" slot="end">
+                  <ion-icon 
+                    [name]="user.showHouses ? 'chevron-up-outline' : 'chevron-down-outline'">
+                  </ion-icon>
+                </ion-button>
+              </ion-item-divider>
+
+              <div *ngIf="user.showHouses" class="houses-container">
+                <ion-item-sliding *ngFor="let house of user.houses" class="house-item">
+                  <ion-item>
+                    <ion-icon name="home" slot="start" [color]="house.active ? 'success' : 'medium'"></ion-icon>
+                    <ion-label>
+                      <h3>{{ house.number }}</h3>
+                      <p>Estado: {{ house.active ? 'Activa' : 'Inactiva' }}</p>
+                    </ion-label>
+                    <ion-badge [color]="house.active ? 'success' : 'medium'" slot="end">
+                      {{ house.active ? 'Activa' : 'Inactiva' }}
+                    </ion-badge>
+                  </ion-item>
+
+                  <ion-item-options side="end">
+                    <ion-item-option color="primary" (click)="openEditHouse(house, user.id)">
+                      <ion-icon slot="icon-only" name="create"></ion-icon>
+                    </ion-item-option>
+
+                    <ion-item-option color="danger" (click)="deleteHouse(house.id, user.id)">
+                      <ion-icon slot="icon-only" name="trash"></ion-icon>
+                    </ion-item-option>
+                  </ion-item-options>
+                </ion-item-sliding>
+              </div>
+            </ion-item-group>
+          </ion-list>
+        </div>
+      </div>
+
+      <!-- 💬 Sección: Mensajes -->
+      <div *ngIf="selectedSection === 'messages'" class="content-wrapper">
+        <h1 class="section-title">Mensajes</h1>
+
+        <div class="empty-state">
+          <ion-icon name="chatbubble-ellipses-outline" size="large"></ion-icon>
+          <h3>No hay mensajes disponibles</h3>
+          <p>Los mensajes aparecerán aquí cuando se reciban.</p>
+        </div>
+      </div>
+    </div>
   </div>
 </ion-content>

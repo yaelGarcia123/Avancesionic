@@ -1,17 +1,226 @@
+// ===== Layout principal =====
+.admin-layout {
+  display: flex;
+  height: 100%;
+  background: #f2f2f7;
+  color: #333;
+  font-family: 'Poppins', sans-serif;
+  overflow: hidden;
+}
+
+// ===== Sidebar =====
+.sidebar {
+  width: 250px;
+  background: #e1e0e0;
+  border-right: 1px solid #ddd;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  margin-top: 3.5rem;
+}
+
+.sidebar h3 {
+  color: #0a0a0a;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar li {
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.sidebar li:hover {
+  background: #e5e5ff;
+  color: #333;
+}
+
+.sidebar li.active {
+  background: #1b078f;
+  color: white;
+  font-weight: 600;
+}
+
+// ===== Contenido principal =====
+.main-content {
+  flex: 1;
+  margin-left: 250px;
+  padding: 2rem;
+  background: #f7f7f7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+// ===== Marco blanco =====
+.content-wrapper {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2rem 2.5rem;
+  width: 100%;
+  max-width: 1000px;
+  min-height: 80vh;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+// ===== Action buttons =====
 .action-buttons {
   display: flex;
   gap: 12px;
   margin-bottom: 16px;
   justify-content: center;
+  flex-wrap: wrap;
 }
+
+.action-buttons ion-button {
+  --border-radius: 10px;
+  --background: #9c043b;
+  --color: white;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.action-buttons ion-button:hover {
+  --background: #b30c49;
+}
+
+// ===== Tarjetas estadísticas =====
+.stats-container {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 1rem 0 2rem 0;
+  width: 100%;
+  max-width: 800px;
+}
+
+// ===== Caja de lista de usuarios =====
+.users-list-box {
+  background: #fafafa;
+  border-radius: 15px;
+  padding: 20px 25px;
+  margin-top: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.user-list-scroll {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-top: 10px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.user-list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.user-list-scroll::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+// ===== Subpanel de casas =====
+.houses-container {
+  background: #f9f9f9;
+  border-left: 3px solid #007bff;
+  padding-left: 15px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+// ===== Items de casas =====
 .house-item {
   --padding-start: 16px;
   --inner-padding-end: 16px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.house-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+// ===== Opciones deslizantes =====
 ion-item-option {
   width: 60px;
   display: flex;
   justify-content: center;
   align-items: center;
+  --background: #204b9a;
+  --color: white;
+  border-radius: 0 8px 8px 0;
+}
+
+ion-item-option.edit {
+  --background: #007bff;
+}
+
+ion-item-option.delete {
+  --background: #e74c3c;
+}
+
+// ===== Secciones vacías / carga =====
+.loading,
+.empty-state {
+  text-align: center;
+  margin-top: 2rem;
+  color: #555;
+}
+
+.empty-state ion-icon {
+  color: #999;
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+}
+
+// ===== Título de sección =====
+.section-title {
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+// ===== Scroll suave =====
+* {
+  scroll-behavior: smooth;
 }

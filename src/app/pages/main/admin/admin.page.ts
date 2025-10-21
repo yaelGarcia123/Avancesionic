@@ -34,6 +34,7 @@ export class AdminPage implements OnInit {
     private loadingController: LoadingController, // To show loading indicators
     private utils: Utils                     // Utility service (e.g., toasts)
   ) {}
+selectedSection: string = 'users';
 
   ngOnInit() {
     this.loadAllData(); // Load all data when the component initializes
