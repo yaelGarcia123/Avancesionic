@@ -198,9 +198,7 @@
           [class.selected]="selectedChatUser?.id === user.id"
           detail="false"
         >
-          <ion-avatar slot="start">
-            <img [src]="user.photoURL || 'assets/default-avatar.png'" alt="Avatar" />
-          </ion-avatar>
+          
           <ion-label>
             <h3>{{ user.name || 'Usuario' }}</h3>
             <p>{{ user.email }}</p>
@@ -223,9 +221,7 @@
           <ion-icon name="arrow-back" slot="icon-only"></ion-icon>
         </ion-button>
         <div class="chat-user-info">
-          <ion-avatar class="small-avatar">
-            <img [src]="selectedChatUser.photoURL || 'assets/default-avatar.png'" alt="Avatar" />
-          </ion-avatar>
+          
           <div>
             <h3>{{ selectedChatUser.name || 'Usuario' }}</h3>
             <p>{{ selectedChatUser.email }}</p>

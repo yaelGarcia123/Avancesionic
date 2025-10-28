@@ -40,6 +40,8 @@ export class AuthServ {
             this.userServ.currentUser.next(userData);
 
             this.userServ.isAdmin();
+                this.utilsSvc.saveLocalStorage('users', userData);
+
           }
         });
         console.log('User is signed in:', user);

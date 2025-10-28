@@ -12,6 +12,7 @@ import {
 } from '@angular/fire/firestore';
 
 import { UserServ } from './user';
+import { getAuth } from 'firebase/auth';
 
 @Injectable({
   providedIn: 'root',
@@ -31,13 +32,14 @@ export class ChatService {
     utils?: any
   ): Promise<void> {
     try {
-      const user = this.userServ.currentUser.value;
-      if (!user) throw new Error('Usuario no autenticado');
-
+       const auth = getAuth();
+    const currentUser = auth.currentUser;
+    const user = this.userServ.currentUser.value;
+if (!currentUser) throw new Error('Usuario no autenticado');
       const messageData = {
-        fromUid: user.id,
-        fromName: user.name || 'Usuario',
-        fromEmail: user.email || '',
+       fromUid: currentUser.uid, // ✅ UID real del usuario autenticado
+      fromName: user?.name || 'Usuario',
+      fromEmail: user?.email || currentUser.email || '',
         toUid: toUid,
         toName: toName,
         toEmail: toEmail,
@@ -70,46 +72,45 @@ export class ChatService {
 
   // Obtener mensajes - VERSIÓN SIN CONSULTAS COMPLEJAS
   getMessagesWithAdmin(
-    adminUid: string,
-    onMessagesUpdate: (messages: any[]) => void
-  ): () => void {
-    const user = this.userServ.currentUser.value;
-
-    if (!user) {
-      throw new Error('Usuario no autenticado');
-    }
-
-    const messagesRef = collection(getFirestore(), 'messages');
-
-    return onSnapshot(messagesRef, (snapshot) => {
-      const allMessages: any[] = [];
-
-      snapshot.forEach((doc) => {
-        const messageData = doc.data();
-
-        if (
-          (messageData['fromUid'] === user.id &&
-            messageData['toUid'] === adminUid) ||
-          (messageData['fromUid'] === adminUid &&
-            messageData['toUid'] === user.id)
-        ) {
-          allMessages.push({
-            id: doc.id,
-            ...messageData,
-          });
-        }
-      });
-
-      allMessages.sort((a, b) => {
-        const timeA = a.timestamp?.toMillis?.() || 0;
-        const timeB = b.timestamp?.toMillis?.() || 0;
-        return timeA - timeB;
-      });
-
-      onMessagesUpdate(allMessages);
-    });
+  adminUid: string,
+  onMessagesUpdate: (messages: any[]) => void
+): () => void {
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('Usuario no autenticado');
   }
 
+  const userUid = currentUser.uid; // ✅ UID del usuario autenticado
+  const messagesRef = collection(getFirestore(), 'messages');
+
+  return onSnapshot(messagesRef, (snapshot) => {
+    const allMessages: any[] = [];
+
+    snapshot.forEach((doc) => {
+      const messageData = doc.data();
+
+      if (
+        (messageData['fromUid'] === userUid && messageData['toUid'] === adminUid) ||
+        (messageData['fromUid'] === adminUid && messageData['toUid'] === userUid)
+      ) {
+        allMessages.push({
+          id: doc.id,
+          ...messageData,
+        });
+      }
+    });
+
+    // Ordenar por fecha
+    allMessages.sort((a, b) => {
+      const timeA = a.timestamp?.toMillis?.() || 0;
+      const timeB = b.timestamp?.toMillis?.() || 0;
+      return timeA - timeB;
+    });
+
+    onMessagesUpdate(allMessages);
+  });
+}
   // Obtener administradores
   async getAdmins(): Promise<any[]> {
     try {
