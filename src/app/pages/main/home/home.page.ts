@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { Place } from 'src/app/models/places';
+import { Place } from 'src/app/models/Places';
 import { FirebaseServ } from 'src/app/services/firebase';
 import { Utils } from 'src/app/services/utils';
 import { ChatService } from 'src/app/services/chatservice';

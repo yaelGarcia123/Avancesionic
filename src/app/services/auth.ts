@@ -7,7 +7,7 @@ import {
   updateProfile,
   User,
 } from '@angular/fire/auth';
-import { UserSystem } from '../models/user.model';
+import { UserSystem } from '../models/UserSystem';
 import { inject, Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { AngularFireAuth } from '@angular/fire/compat/auth';

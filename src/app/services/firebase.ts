@@ -23,7 +23,7 @@ import {
   getAuth,
   signOut,
 } from 'firebase/auth';
-import { UserSystem } from '../models/user.model';
+import { UserSystem } from '../models/UserSystem';
 
 @Injectable({
   providedIn: 'root',
