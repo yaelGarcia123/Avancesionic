@@ -1,26 +1,15 @@
 import { Component, inject, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  AlertController,
-  LoadingController,
-  ModalController,
-} from '@ionic/angular';
+
 import { FirebaseServ } from 'src/app/services/firebase';
 import { AdminEditPage } from '../admin-edit/admin-edit.page';
 import { AdminAddHousePagePage } from '../admin-add-house.page/admin-add-house.page.page';
 import { HouseResident } from 'src/app/models/HouseResident';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { getAuth } from 'firebase/auth';
+import { getFirestore, doc, collection, setDoc, deleteDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ChatService } from 'src/app/services/chatservice';
-import {
-  doc,
-  getFirestore,
-  collection,
-  setDoc,
-  deleteDoc,
-} from '@angular/fire/firestore';
 import { Utils } from 'src/app/services/utils';
 import { UserServ } from 'src/app/services/user';
 import { AuthServ } from 'src/app/services/auth';
@@ -47,7 +36,7 @@ export class AdminPage implements OnInit {
   activeHouses: number = 0;
 
   // ===== Chat =====
-  messageUsers: any[] = []; // lista de usuarios que han enviado mensajes
+  messageUsers: any[] = [];
   users$: Observable<any[]> | undefined;
   selectedChatUser: any = null;
   messages$: Observable<any[]> | undefined;
@@ -55,17 +44,18 @@ export class AdminPage implements OnInit {
   unreadCounts: { [userId: string]: number } = {};
 
   firebaseSvc = inject(FirebaseServ);
-  userServ = inject(UserServ);
   authServ = inject(AuthServ);
   utils = inject(Utils);
   chatService = inject(ChatService);
+
   constructor(private router: Router) {}
 
   async ngOnInit() {
-    this.currentUid = (await this.authServ.getUser()).uid;
+    const user = await this.authServ.getUser();
+    this.currentUid = user?.uid || null;
 
-    this.loadAllData(); // cargar usuarios y casas
-    this.loadMessageUsers(); // cargar usuarios con mensajes
+    this.loadAllData();
+    this.loadMessageUsers();
   }
 
   // ===========================
@@ -268,8 +258,9 @@ export class AdminPage implements OnInit {
     await alert.present();
   }
 
-  //  MENSAJES chat
-
+  // ===========================
+  // CHAT
+  // ===========================
   async loadMessageUsers() {
     if (!this.currentUid) {
       console.error('No hay usuario admin autenticado');
@@ -277,24 +268,10 @@ export class AdminPage implements OnInit {
     }
 
     try {
-      console.log(
-        'Cargando usuarios con mensajes para admin:',
-        this.currentUid
-      );
-      this.messageUsers = await this.chatService.getUsersWithMessages(
-        this.currentUid
-      );
-
-      // Calcular mensajes no leídos para cada usuario
+      this.messageUsers = await this.chatService.getUsersWithMessages(this.currentUid);
       this.messageUsers.forEach((user) => {
         this.unreadCounts[user.id] = user.unread ? 1 : 0;
       });
-
-      console.log('Usuarios con mensajes cargados:', this.messageUsers);
-
-      if (this.messageUsers.length === 0) {
-        console.log('No se encontraron usuarios con mensajes');
-      }
     } catch (error) {
       console.error('Error cargando usuarios con mensajes:', error);
       this.utils.presentToast({
@@ -315,7 +292,6 @@ export class AdminPage implements OnInit {
     }
 
     try {
-      // Cargar mensajes entre el admin y el usuario seleccionado
       this.messages$ = this.firebaseSvc.firestore
         .collection('messages', (ref) =>
           ref
@@ -324,22 +300,23 @@ export class AdminPage implements OnInit {
         )
         .valueChanges({ idField: 'id' })
         .pipe(
-          map((messages: any[]) => {
-            const filteredMessages = messages.filter(
+          map((messages: any[]) =>
+            messages.filter(
               (msg) =>
                 (msg.fromUid === this.currentUid && msg.toUid === user.id) ||
                 (msg.fromUid === user.id && msg.toUid === this.currentUid)
-            );
-
-            console.log('Mensajes filtrados:', filteredMessages);
-            return filteredMessages;
-          })
+            )
+          )
         );
 
-      // Marcar mensajes como leídos
       await this.markMessagesAsRead(user.id);
     } catch (error) {
       console.error('Error abriendo chat:', error);
+      this.utils.presentToast({
+        message: 'Error al cargar la conversación',
+        duration: 3000,
+        color: 'danger',
+      });
     }
   }
 
@@ -347,17 +324,21 @@ export class AdminPage implements OnInit {
     if (!this.currentUid) return;
 
     try {
-      const messages = await this.chatService.getAdminMessages(this.currentUid);
-      const unreadMessages = messages.filter(
-        (msg) =>
-          msg.fromUid === userId && msg.toUid === this.currentUid && !msg.read
+      const messagesRef = this.firebaseSvc.firestore.collection('messages', (ref) =>
+        ref
+          .where('fromUid', '==', userId)
+          .where('toUid', '==', this.currentUid)
+          .where('read', '==', false)
       );
 
-      for (const msg of unreadMessages) {
-        // Usa AngularFirestore en lugar de updateDoc directo
-        await this.firebaseSvc.firestore.doc(`messages/${msg.id}`).update({
-          read: true,
+      const snapshot = await messagesRef.get().toPromise();
+      if (snapshot && !snapshot.empty) {
+        const batch = this.firebaseSvc.firestore.firestore.batch();
+        snapshot.forEach((doc) => {
+          const messageRef = this.firebaseSvc.firestore.collection('messages').doc(doc.id).ref;
+          batch.update(messageRef, { read: true });
         });
+        await batch.commit();
       }
     } catch (error) {
       console.error('Error marcando mensajes como leídos:', error);
@@ -384,13 +365,15 @@ export class AdminPage implements OnInit {
     }
 
     try {
+      const currentUser = await this.authServ.getUser();
+
       const messageData = {
         fromUid: this.currentUid,
         toUid: this.selectedChatUser.id,
         fromName: 'Administrador',
-        toName: this.selectedChatUser.name,
-        fromEmail: '',
-        toEmail: this.selectedChatUser.email,
+        toName: this.selectedChatUser.name || 'Usuario',
+        fromEmail: currentUser.email || '',
+        toEmail: this.selectedChatUser.email || '',
         message: this.newMessage.trim(),
         timestamp: new Date(),
         participants: [this.currentUid, this.selectedChatUser.id],
@@ -400,21 +383,18 @@ export class AdminPage implements OnInit {
 
       await this.firebaseSvc.firestore.collection('messages').add(messageData);
 
-      console.log('Mensaje enviado:', messageData);
       this.newMessage = '';
-
       this.utils.presentToast({
         message: 'Mensaje enviado',
         duration: 2000,
         color: 'success',
       });
 
-      // Recargar la lista de usuarios para actualizar el último mensaje
       await this.loadMessageUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error enviando mensaje:', error);
       this.utils.presentToast({
-        message: 'Error al enviar mensaje',
+        message: `Error al enviar mensaje: ${error.message}`,
         duration: 3000,
         color: 'danger',
       });
@@ -423,9 +403,7 @@ export class AdminPage implements OnInit {
 
   setSection(section: string) {
     this.selectedSection = section;
-    if (section === 'messages') {
-      this.loadMessageUsers();
-    }
+    if (section === 'messages') this.loadMessageUsers();
   }
 
   closeChat() {
