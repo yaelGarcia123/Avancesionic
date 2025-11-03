@@ -1,5 +1,14 @@
 import { Component, inject, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import {
+  addDoc,
+  serverTimestamp,
+  query,
+  where,
+  getDocs,
+  writeBatch,
+ 
+} from '@angular/fire/firestore';
 
 import { FirebaseServ } from 'src/app/services/firebase';
 import { AdminEditPage } from '../admin-edit/admin-edit.page';
@@ -292,22 +301,33 @@ export class AdminPage implements OnInit {
     }
 
     try {
-      this.messages$ = this.firebaseSvc.firestore
-        .collection('messages', (ref) =>
+      this.messages$ = this.firebaseSvc
+        .getCollectionData('messages', (ref) =>
           ref
             .where('participants', 'array-contains', this.currentUid)
             .orderBy('timestamp', 'asc')
         )
-        .valueChanges({ idField: 'id' })
-        .pipe(
-          map((messages: any[]) =>
-            messages.filter(
-              (msg) =>
-                (msg.fromUid === this.currentUid && msg.toUid === user.id) ||
-                (msg.fromUid === user.id && msg.toUid === this.currentUid)
-            )
-          )
-        );
+       .pipe(
+  map((messages: any[]) =>
+    messages
+      .filter(m =>
+        (m.fromUid === this.currentUid && m.toUid === user.id) ||
+        (m.fromUid === user.id && m.toUid === this.currentUid)
+      )
+      .sort((a, b) => {
+        const ta = a?.timestamp?.toMillis?.() ??
+                   (a?.timestamp?._seconds ? a.timestamp._seconds * 1000 : null);
+        const tb = b?.timestamp?.toMillis?.() ??
+                   (b?.timestamp?._seconds ? b.timestamp._seconds * 1000 : null);
+        const va = ta ?? a?.clientAt ?? 0;
+        const vb = tb ?? b?.clientAt ?? 0;
+        if (va !== vb) return va - vb;
+        const ida = a.id ?? '';
+        const idb = b.id ?? '';
+        return ida < idb ? -1 : ida > idb ? 1 : 0;
+      })
+  )
+);
 
       await this.markMessagesAsRead(user.id);
     } catch (error) {
@@ -321,85 +341,76 @@ export class AdminPage implements OnInit {
   }
 
   async markMessagesAsRead(userId: string) {
-    if (!this.currentUid) return;
+  if (!this.currentUid) return;
 
-    try {
-      const messagesRef = this.firebaseSvc.firestore.collection('messages', (ref) =>
-        ref
-          .where('fromUid', '==', userId)
-          .where('toUid', '==', this.currentUid)
-          .where('read', '==', false)
-      );
+  try {
+    const db = getFirestore();//Obtienes la instancia del Firestore ya inicializado (la que registraste en tu AppModule o main.ts).
+    const q = query(
+      collection(db, 'messages'),
+      where('fromUid', '==', userId),//mensajes que te envió ese usuario.
+      where('toUid', '==', this.currentUid),//mensajes dirigidos a ti (el admin).
+      where('read', '==', false)//solo los que aún no están leídos.
+    );
 
-      const snapshot = await messagesRef.get().toPromise();
-      if (snapshot && !snapshot.empty) {
-        const batch = this.firebaseSvc.firestore.firestore.batch();
-        snapshot.forEach((doc) => {
-          const messageRef = this.firebaseSvc.firestore.collection('messages').doc(doc.id).ref;
-          batch.update(messageRef, { read: true });
-        });
-        await batch.commit();
-      }
-    } catch (error) {
-      console.error('Error marcando mensajes como leídos:', error);
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const batch = writeBatch(db);
+      snap.forEach(d => {
+        batch.update(doc(db, 'messages', d.id), { read: true });
+      });
+      await batch.commit();
     }
+  } catch (error) {
+    console.error('Error marcando mensajes como leídos:', error);
   }
+}
 
   async sendMessage() {
-    if (!this.newMessage.trim()) {
-      this.utils.presentToast({
-        message: 'Escribe un mensaje',
-        duration: 2000,
-        color: 'warning',
-      });
-      return;
-    }
-
-    if (!this.selectedChatUser || !this.currentUid) {
-      this.utils.presentToast({
-        message: 'No hay conversación seleccionada',
-        duration: 3000,
-        color: 'danger',
-      });
-      return;
-    }
-
-    try {
-      const currentUser = await this.authServ.getUser();
-
-      const messageData = {
-        fromUid: this.currentUid,
-        toUid: this.selectedChatUser.id,
-        fromName: 'Administrador',
-        toName: this.selectedChatUser.name || 'Usuario',
-        fromEmail: currentUser.email || '',
-        toEmail: this.selectedChatUser.email || '',
-        message: this.newMessage.trim(),
-        timestamp: new Date(),
-        participants: [this.currentUid, this.selectedChatUser.id],
-        read: false,
-        type: 'admin_to_user',
-      };
-
-      await this.firebaseSvc.firestore.collection('messages').add(messageData);
-
-      this.newMessage = '';
-      this.utils.presentToast({
-        message: 'Mensaje enviado',
-        duration: 2000,
-        color: 'success',
-      });
-
-      await this.loadMessageUsers();
-    } catch (error: any) {
-      console.error('Error enviando mensaje:', error);
-      this.utils.presentToast({
-        message: `Error al enviar mensaje: ${error.message}`,
-        duration: 3000,
-        color: 'danger',
-      });
-    }
+  if (!this.newMessage.trim()) {
+    this.utils.presentToast({ message: 'Escribe un mensaje', duration: 2000, color: 'warning' });
+    return;
   }
+  if (!this.selectedChatUser || !this.currentUid) {
+    this.utils.presentToast({ message: 'No hay conversación seleccionada', duration: 3000, color: 'danger' });
+    return;
+  }
+
+  try {
+    const currentUser = await this.authServ.getUser();
+
+    // (opcional) threadKey para optimizar consultas futuras
+    const a = this.currentUid;
+    const b = this.selectedChatUser.id;
+    const threadKey = a < b ? `${a}_${b}` : `${b}_${a}`;
+
+    const messageData = {
+      fromUid: this.currentUid,
+      toUid: this.selectedChatUser.id,
+      fromName: 'Administrador',
+      toName: this.selectedChatUser.name || 'Usuario',
+      fromEmail: currentUser?.email || '',
+      toEmail: this.selectedChatUser.email || '',
+      message: this.newMessage.trim(),
+      timestamp: serverTimestamp(),  
+        clientAt: Date.now(),        // 👈 respaldo local
+      // 👈 orden consistente
+      participants: [this.currentUid, this.selectedChatUser.id],
+      read: false,
+      type: 'admin_to_user',
+      threadKey,                           // 👈 opcional pero útil
+    };
+
+    const db = getFirestore();
+    await addDoc(collection(db, 'messages'), messageData);  // 👈 no toca .firestore
+
+    this.newMessage = '';
+    this.utils.presentToast({ message: 'Mensaje enviado', duration: 2000, color: 'success' });
+    await this.loadMessageUsers();
+  } catch (error: any) {
+    console.error('Error enviando mensaje:', error);
+    this.utils.presentToast({ message: `Error al enviar mensaje: ${error.message}`, duration: 3000, color: 'danger' });
+  }
+}
 
   setSection(section: string) {
     this.selectedSection = section;
