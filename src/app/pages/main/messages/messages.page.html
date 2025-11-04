@@ -1,5 +1,3 @@
-
-
 <ion-content>
   <div class="main-content">
     
@@ -14,9 +12,13 @@
       
       <!-- Admin info -->
       <div class="admin-info">
+        <!-- 🔙 Botón regresar (a la izquierda) -->
+        <ion-button class="back-btn" fill="clear" [routerLink]="['/home']">
+          <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+        </ion-button>
+
         <ion-icon name="person-circle" size="large"></ion-icon>
         <div class="admin-details">
-         
           <p>Administrador</p>
         </div>
       </div>
@@ -24,11 +26,12 @@
       <!-- Messages list -->
       <div class="messages-list">
         <div 
-          *ngFor="let message of messages" 
-          class="message" 
-          [class.my-message]="message.fromUid === admin.id"
-          [class.other-message]="message.fromUid !== admin.id"
-        >
+  *ngFor="let message of messages" 
+  class="message" 
+  [class.my-message]="message.fromUid === currentUserId"
+  [class.other-message]="message.fromUid !== currentUserId"
+>
+
           <div class="message-content">
             <p class="message-text">{{ message.message }}</p>
             <span class="message-time">

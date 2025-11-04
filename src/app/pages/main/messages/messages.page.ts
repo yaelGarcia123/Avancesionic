@@ -10,6 +10,7 @@ import { getAuth } from 'firebase/auth';
   standalone: false
 })
 export class MessagesPage implements OnInit, OnDestroy {
+currentUserId: string | null = null;
 
   // ✅ Inyección de servicios usando la función inject()
   private chatSvc = inject(ChatService); // Servicio para manejar chats y mensajes
@@ -24,6 +25,8 @@ export class MessagesPage implements OnInit, OnDestroy {
 
   // ✅ Se ejecuta al iniciar el componente
   async ngOnInit() {
+    const user = getAuth().currentUser;
+  this.currentUserId = user ? user.uid : null;
     await this.loadAdmin(); // Llama a la función para cargar el administrador
   }
 
