@@ -54,14 +54,24 @@
         </div>
 
         <!-- Barra de búsqueda -->
-        <ion-searchbar
-          placeholder="Buscar usuario o casa..."
-          [(ngModel)]="searchTerm"
-          (ionInput)="filterData()"
-          animated
-          debounce="300"
-        >
-        </ion-searchbar>
+        
+<div class="modern-searchbar-wide">
+  <ion-icon name="search-outline" class="search-icon"></ion-icon>
+  <input
+    type="text"
+    [(ngModel)]="searchTerm"
+    (input)="filterData()"
+    placeholder="Buscar usuario o casa..."
+  />
+  
+  <ion-icon
+    *ngIf="searchTerm"
+    name="close-circle"
+    class="clear-icon"
+    (click)="searchTerm = ''; filterData()"
+  ></ion-icon>
+</div>
+
 
         <!-- Estadísticas rápidas -->
 <div class="stats-container">

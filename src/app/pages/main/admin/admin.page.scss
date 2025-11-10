@@ -253,13 +253,12 @@
 // ===== Caja de lista de usuarios (Diseño Moderno) =====
 .users-list-box {
   background: #fafafa;
-  border-radius: 20px;
-  padding: 20px 20px;
+  border-radius: 16px;
+  padding: 15px;
   margin-top: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  max-height: 650px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  max-height: none;       /* 🔹 sin límite */
+  overflow: visible;      /* 🔹 muestra todo el contenido */
   transition: all 0.3s ease;
 }
 
@@ -681,3 +680,69 @@ ion-badge[color='medium'] {
     transform: translateX(0);
   }
 }
+
+/* ===== Buscador moderno ancho ===== */
+.modern-searchbar-wide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 16px;
+  padding: 0.8rem 1.2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e4e4e4;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto 1.5rem auto;
+  transition: all 0.3s ease;
+}
+
+.modern-searchbar-wide:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.modern-searchbar-wide:focus-within {
+  border-color: #1b36d1;
+  box-shadow: 0 0 0 3px rgba(27, 54, 209, 0.1);
+}
+
+.modern-searchbar-wide input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  background: transparent;
+  color: #333;
+  font-family: 'Poppins', sans-serif;
+  padding: 0 0.8rem;
+}
+
+.search-icon {
+  font-size: 1.3rem;
+  color: #777;
+}
+
+.clear-icon {
+  font-size: 1.2rem;
+  color: #aaa;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  margin-left: 0.3rem;
+}
+
+.clear-icon:hover {
+  color: #1b36d1;
+}
+
+/* 🔹 Botón lateral de búsqueda */
+
+
+.search-btn ion-icon {
+  font-size: 1.2rem;
+}
+
+.search-btn:hover {
+  background: #152cb0;
+  transform: translateY(-1px);
+}
+
