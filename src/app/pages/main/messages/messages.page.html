@@ -1,6 +1,5 @@
 <ion-content>
   <div class="main-content">
-    
     <!-- Loading -->
     <div *ngIf="loading" class="loading">
       <ion-spinner></ion-spinner>
@@ -9,7 +8,6 @@
 
     <!-- Chat interface -->
     <div *ngIf="!loading && admin" class="chat-container">
-      
       <!-- Admin info -->
       <div class="admin-info">
         <!-- 🔙 Botón regresar (a la izquierda) -->
@@ -25,13 +23,12 @@
 
       <!-- Messages list -->
       <div class="messages-list">
-        <div 
-  *ngFor="let message of messages" 
-  class="message" 
-  [class.my-message]="message.fromUid === currentUserId"
-  [class.other-message]="message.fromUid !== currentUserId"
->
-
+        <div
+          *ngFor="let message of messages"
+          class="message"
+          [class.my-message]="message.fromUid === currentUserId"
+          [class.other-message]="message.fromUid !== currentUserId"
+        >
           <div class="message-content">
             <p class="message-text">{{ message.message }}</p>
             <span class="message-time">
@@ -43,8 +40,8 @@
 
       <!-- Input area -->
       <div class="input-container">
-        <ion-input 
-          [(ngModel)]="newMessage" 
+        <ion-input
+          [(ngModel)]="newMessage"
           placeholder="Escribe tu mensaje..."
           (keyup.enter)="sendMessage()"
         ></ion-input>
@@ -52,7 +49,6 @@
           <ion-icon name="send"></ion-icon>
         </ion-button>
       </div>
-
     </div>
 
     <!-- No admin found -->
@@ -61,6 +57,5 @@
       <h3>No hay administrador disponible</h3>
       <p>Por favor intenta más tarde</p>
     </div>
-
   </div>
 </ion-content>
