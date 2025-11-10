@@ -64,32 +64,31 @@
         </ion-searchbar>
 
         <!-- Estadísticas rápidas -->
-        <div class="stats-container">
-          <ion-card color="primary">
-            <ion-card-header>
-              <ion-card-title>{{ filteredUsers.length }}</ion-card-title>
-              <ion-card-subtitle>Total Usuarios</ion-card-subtitle>
-            </ion-card-header>
-          </ion-card>
+<div class="stats-container">
+  <div class="stat-card primary">
+    <ion-icon name="people-outline" class="stat-icon"></ion-icon>
+    <h2>{{ filteredUsers.length }}</h2>
+    <p>Total Usuarios</p>
+  </div>
 
-          <ion-card color="secondary">
-            <ion-card-header>
-              <ion-card-title>{{ totalHouses }}</ion-card-title>
-              <ion-card-subtitle>Casas Registradas</ion-card-subtitle>
-            </ion-card-header>
-          </ion-card>
+  <div class="stat-card secondary">
+    <ion-icon name="home-outline" class="stat-icon"></ion-icon>
+    <h2>{{ totalHouses }}</h2>
+    <p>Casas Registradas</p>
+  </div>
 
-          <ion-card color="tertiary">
-            <ion-card-header>
-              <ion-card-title>{{ activeHouses }}</ion-card-title>
-              <ion-card-subtitle>Casas Activas</ion-card-subtitle>
-            </ion-card-header>
-          </ion-card>
-        </div>
+  <div class="stat-card tertiary">
+    <ion-icon name="checkmark-circle-outline" class="stat-icon"></ion-icon>
+    <h2>{{ activeHouses }}</h2>
+    <p>Casas Activas</p>
+  </div>
+</div>
 
-        <!-- Lista de usuarios -->
+        <!-- Lista de usuarios --> 
+         
+        <h2>Usuarios y sus Propiedades</h2>
         <div class="users-list-box">
-          <h2>Usuarios y sus Propiedades</h2>
+         
 
           <div *ngIf="loading" class="loading">
             <ion-spinner></ion-spinner>

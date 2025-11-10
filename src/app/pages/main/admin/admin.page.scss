@@ -124,14 +124,14 @@
 .main-content {
   flex: 1;
   margin-left: 250px;
-  padding: -10rem;
+  padding: 2rem 0; /* quita el padding negativo */
   background: #f7f7f7;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  min-height: 100vh;
-  overflow-y: auto;
+  height: calc(100vh - 3.5rem); /* se adapta a la pantalla */
+  overflow-y: auto; /* agrega scroll si hay más contenido */
   box-sizing: border-box;
 }
 
@@ -139,15 +139,18 @@
 .content-wrapper {
   background: #ffffff;
   border-radius: 20px;
-  padding: 2rem 2.5rem;
+  padding: 1.5rem 2rem;
   width: 100%;
   max-width: 1000px;
-  min-height: 80vh;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  height: auto;             /* 🔹 se ajusta al contenido */
+  min-height: unset;        /* 🔹 quita el alto mínimo fijo */
+  box-shadow: 0 3px 16px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: stretch;
+  overflow: visible;        /* 🔹 evita el scroll interno */
+  margin-bottom: 2rem;
 }
 
 // ===== Action buttons =====
@@ -179,15 +182,73 @@
 }
 
 // ===== Tarjetas estadísticas =====
+/* ===== Tarjetas estadísticas (nuevo diseño compacto y moderno) ===== */
 .stats-container {
   display: flex;
-  gap: 1rem;
   justify-content: center;
+  align-items: stretch;
+  gap: 1rem;
   flex-wrap: wrap;
   margin: 1rem 0 2rem 0;
   width: 100%;
-  max-width: 800px;
+  max-width: 900px;
 }
+
+.stat-card {
+  flex: 1 1 140px; /* 🔹 más angosta (antes 180px) */
+  background: #fff;
+  border-radius: 12px; /* 🔹 esquinas más pequeñas */
+  padding: 0.8rem 1rem; /* 🔹 menos espacio interno */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  border: 1px solid #e9e9e9;
+  cursor: default;
+}
+
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.stat-icon {
+  font-size: 1.4rem; /* 🔹 antes 1.8rem */
+  margin-bottom: 0.4rem;
+  opacity: 0.9;
+}
+
+.stat-card h2 {
+  font-size: 1.2rem; /* 🔹 antes 1.5rem */
+  margin: 0;
+  color: #111;
+  font-weight: 700;
+}
+
+.stat-card p {
+  font-size: 0.8rem; /* 🔹 antes 0.9rem */
+  color: #555;
+  margin-top: 2px;
+}
+
+
+/* 🎨 Colores individuales */
+.stat-card.primary {
+  background: linear-gradient(135deg, #e1f6ff, #2c307b);
+}
+
+.stat-card.secondary {
+  background: linear-gradient(135deg, #e1f6ff, #2c307b);
+}
+
+.stat-card.tertiary {
+  background: linear-gradient(135deg, #e1f6ff, #2c307b);
+}
+
 
 // ===== Caja de lista de usuarios (Diseño Moderno) =====
 .users-list-box {
