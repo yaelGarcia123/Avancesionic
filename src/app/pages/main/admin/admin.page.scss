@@ -67,7 +67,7 @@
 .main-content {
   flex: 1;
   margin-left: 250px;
-  padding: 2rem;
+  padding: -10rem;
   background: #f7f7f7;
   display: flex;
   flex-direction: column;
@@ -129,8 +129,8 @@
 .users-list-box {
   background: #fafafa;
   border-radius: 15px;
-  padding: 20px 25px;
-  margin-top: 30px;
+  padding: 10px 10px;
+  margin-top: 5px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
