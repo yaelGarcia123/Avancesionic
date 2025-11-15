@@ -33,9 +33,27 @@ import { AuthServ } from 'src/app/services/auth';
   templateUrl: './admin.page.html',
   styleUrls: ['./admin.page.scss'],
   standalone: false,
+  
 })
+
+
 export class AdminPage implements OnInit {
   @Input() backbutton!: string;
+// ===== TICKETS =====
+ticketStatus: 'abierto' | 'cerrado' = 'abierto';
+
+ticketView: 'houses' | 'tickets' | 'newTicket' = 'houses';
+
+housesForTickets: any[] = [];
+selectedHouseForTickets: any = null;
+
+tickets: any[] = [];
+loadingTickets: boolean = false;
+
+newTicket = {
+  area: '',
+  descripcion: ''
+};
 
   // ===== Variables generales =====
   currentUid: string | null = null;
@@ -439,9 +457,18 @@ export class AdminPage implements OnInit {
   }
 
   setSection(section: string) {
-    this.selectedSection = section;
-    if (section === 'messages') this.loadMessageUsers();
+  this.selectedSection = section;
+
+  if (section === 'messages') {
+    this.loadMessageUsers();
   }
+
+  if (section === 'tickets') {
+    this.ticketView = 'houses';
+    this.loadTicketHouses();
+  }
+}
+
 
   closeChat() {
     this.selectedChatUser = null;
@@ -451,4 +478,93 @@ export class AdminPage implements OnInit {
   navigateToProfile() {
     this.router.navigate(['/profile']);
   }
+
+  loadTicketHouses() {
+  this.housesForTickets = [];
+
+  this.allUsers.forEach(user => {
+    user.houses.forEach(house => {
+      this.housesForTickets.push({
+        id: house.id,
+        number: house.number,
+        active: house.active,
+        owner: user.name
+      });
+    });
+  });
+}
+openHouseTickets(house: any) {
+  this.selectedHouseForTickets = house;
+  this.ticketView = 'tickets';
+  this.loadTicketsByHouse(house.id);
+}
+async loadTicketsByHouse(houseId: string) {
+  this.loadingTickets = true;
+
+  try {
+    const db = getFirestore();
+
+    const q = query(
+      collection(db, 'tickets'),
+      where('houseId', '==', houseId),
+      where('status', '==', this.ticketStatus)
+    );
+
+    const snap = await getDocs(q);
+
+    this.tickets = snap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+  } catch (e) {
+    console.error('Error cargando tickets:', e);
+  }
+
+  this.loadingTickets = false;
+}
+
+openNewTicket() {
+  this.newTicket = {
+    area: '',
+    descripcion: ''
+  };
+  this.ticketView = 'newTicket';
+}
+async saveTicket() {
+  if (!this.selectedHouseForTickets) return;
+
+  try {
+    const db = getFirestore();
+
+    await addDoc(collection(db, 'tickets'), {
+      houseId: this.selectedHouseForTickets.id,
+      area: this.newTicket.area,
+      descripcion: this.newTicket.descripcion,
+      status: 'abierto',
+      createdAt: serverTimestamp(),
+      createdBy: this.currentUid
+    });
+
+    this.utils.presentToast({
+      message: 'Ticket creado correctamente',
+      color: 'success',
+      duration: 2000
+    });
+
+    this.ticketView = 'tickets';
+    this.loadTicketsByHouse(this.selectedHouseForTickets.id);
+
+  } catch (e) {
+    console.error(e);
+    this.utils.presentToast({
+      message: 'Error al crear ticket',
+      color: 'danger'
+    });
+  }
+}
+changeTicketStatus(status: 'abierto' | 'cerrado') {
+  this.ticketStatus = status;
+  this.loadTicketsByHouse(this.selectedHouseForTickets.id);
+}
+
 }

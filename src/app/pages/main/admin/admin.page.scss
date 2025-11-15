@@ -744,3 +744,143 @@ ion-badge[color="medium"] {
   background: #152cb0;
   transform: translateY(-1px);
 }
+/* ================================
+      SECCIÓN TICKETS — ESTILOS
+================================ */
+
+/* Lista de casas */
+ion-list {
+  background: transparent;
+}
+
+ion-item {
+  margin-bottom: 10px;
+  border-radius: 12px;
+  --background: #ffffff;
+  border: 1px solid #ededed;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.25s ease;
+}
+
+ion-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+/* =============================
+   FILTROS: ABIERTO / CERRADO
+   ============================= */
+.ticket-filters {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 1rem 0 1.5rem 0;
+}
+
+.filter-btn {
+  background: #e9e9f6;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 25px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #444;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.filter-btn:hover {
+  background: #dcdcf5;
+  transform: translateY(-2px);
+}
+
+.filter-btn.active {
+  background: #1b36d1;
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(27, 54, 209, 0.25);
+}
+
+/* =============================
+   BOTÓN NUEVO TICKET
+   ============================= */
+.add-ticket-btn {
+  margin-bottom: 1rem;
+  --background: #1cb854 !important;
+  --border-radius: 12px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(28, 184, 84, 0.25);
+  transition: transform 0.25s ease;
+}
+
+.add-ticket-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* =============================
+   LISTA DE TICKETS
+   ============================= */
+.tickets-list ion-item {
+  display: flex;
+  align-items: center;
+  border-left: 4px solid #1b36d1;
+  padding: 10px;
+}
+
+.tickets-list ion-badge {
+  margin-left: 10px;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* Colores */
+ion-badge[color="warning"] {
+  --background: #ffbb33;
+  color: #663c00;
+}
+
+ion-badge[color="success"] {
+  --background: #21b36f;
+  color: #fff;
+}
+
+/* =============================
+   NUEVO TICKET
+   ============================= */
+.new-ticket-box {
+  padding-top: 1rem;
+}
+
+.ticket-input {
+  margin-bottom: 1.3rem;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  border-radius: 14px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  transition: border-color 0.2s ease;
+}
+
+.ticket-input:hover {
+  border-color: #1b36d1;
+}
+
+.ticket-input ion-textarea,
+.ticket-input ion-select {
+  width: 100%;
+}
+
+.save-ticket-btn {
+  margin-top: 1.5rem;
+  --background: #1cb854;
+  font-size: 1.05rem;
+  --border-radius: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(28, 184, 84, 0.25);
+  transition: all 0.25s ease;
+}
+
+.save-ticket-btn:hover {
+  transform: translateY(-2px);
+}
