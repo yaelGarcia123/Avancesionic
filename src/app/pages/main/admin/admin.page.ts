@@ -463,7 +463,7 @@ newTicket = {
     this.loadMessageUsers();
   }
 
-  if (section === 'tickets') {
+  if (section === 'tickets') {//Load all houses from allUsers.
     this.ticketView = 'houses';
     this.loadTicketHouses();
   }
@@ -479,7 +479,7 @@ newTicket = {
     this.router.navigate(['/profile']);
   }
 
-  loadTicketHouses() {
+  loadTicketHouses() {//Load list of houses for tickets
   this.housesForTickets = [];
 
   this.allUsers.forEach(user => {
@@ -493,26 +493,29 @@ newTicket = {
     });
   });
 }
-openHouseTickets(house: any) {
+openHouseTickets(house: any) {//Guarda qué casa seleccionaste
+//Cambia la vista a "tickets"
+//Carga los tickets de esa casa desde Firestore
   this.selectedHouseForTickets = house;
   this.ticketView = 'tickets';
   this.loadTicketsByHouse(house.id);
 }
-async loadTicketsByHouse(houseId: string) {
+async loadTicketsByHouse(houseId: string) {//Pide a Firestore:
+
   this.loadingTickets = true;
 
   try {
     const db = getFirestore();
 
-    const q = query(
+    const q = query(//Crea la consulta (query) a Firestore
       collection(db, 'tickets'),
       where('houseId', '==', houseId),
       where('status', '==', this.ticketStatus)
     );
 
-    const snap = await getDocs(q);
+    const snap = await getDocs(q);//Ejecuta la consulta
 
-    this.tickets = snap.docs.map(d => ({
+    this.tickets = snap.docs.map(d => ({//Convierte los documentos a un arreglo usable
       id: d.id,
       ...d.data()
     }));
@@ -523,7 +526,7 @@ async loadTicketsByHouse(houseId: string) {
   this.loadingTickets = false;
 }
 
-openNewTicket() {
+openNewTicket() {// Cambia la pantalla al formulario.
   this.newTicket = {
     area: '',
     descripcion: ''
@@ -531,7 +534,7 @@ openNewTicket() {
   this.ticketView = 'newTicket';
 }
 async saveTicket() {
-  if (!this.selectedHouseForTickets) return;
+  if (!this.selectedHouseForTickets) return;//Si no hay una casa seleccionada para el ticket, no hace nada
 
   try {
     const db = getFirestore();
@@ -542,7 +545,7 @@ async saveTicket() {
       descripcion: this.newTicket.descripcion,
       status: 'abierto',
       createdAt: serverTimestamp(),
-      createdBy: this.currentUid
+      createdBy: this.currentUid //Usuario que creó el ticket (admin actual)
     });
 
     this.utils.presentToast({
@@ -551,8 +554,9 @@ async saveTicket() {
       duration: 2000
     });
 
-    this.ticketView = 'tickets';
-    this.loadTicketsByHouse(this.selectedHouseForTickets.id);
+    this.ticketView = 'tickets';//  Regresa a la vista de lista de tickets
+
+    this.loadTicketsByHouse(this.selectedHouseForTickets.id);//Recarga los tickets de la casa actual para ver el ticket nuevo
 
   } catch (e) {
     console.error(e);
@@ -562,9 +566,10 @@ async saveTicket() {
     });
   }
 }
-changeTicketStatus(status: 'abierto' | 'cerrado') {
-  this.ticketStatus = status;
-  this.loadTicketsByHouse(this.selectedHouseForTickets.id);
+changeTicketStatus(status: 'abierto' | 'cerrado') {//Cambia la variable ticketStatus
+
+  this.ticketStatus = status;//Cambia el estado del filtro
+  this.loadTicketsByHouse(this.selectedHouseForTickets.id);//Cambia el estado del filtro
 }
 
 }

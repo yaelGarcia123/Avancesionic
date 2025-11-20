@@ -7,7 +7,11 @@ const routes: Routes = [
   {
     path: '',
     component: MainPage,
+  },  {
+    path: 'manager-tickets',
+    loadChildren: () => import('./manager-tickets/manager-tickets.module').then( m => m.ManagerTicketsPageModule)
   },
+
 ];
 
 @NgModule({
