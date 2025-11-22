@@ -52,7 +52,7 @@
   </ion-item>
 
   <!-- Save button -->
-  <ion-button expand="block" color="success" (click)="save()">
+  <ion-button expand="block" color="success" (click)="save()" [disabled]="!formValid">
     <ion-icon slot="start" name="checkmark"></ion-icon>
     Save
   </ion-button>

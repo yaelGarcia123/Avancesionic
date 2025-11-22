@@ -25,6 +25,12 @@ export class AdminAddHousePagePage implements OnInit {
     // initialize with all users
     this.filteredUsers = [...this.allUsers];
   }
+get formValid() {
+    return (
+      this.newHouse.number.trim() !== '' &&
+      this.newHouse.userId.trim() !== ''
+    );
+  }
 
   dismiss() {
     // close the modal without returning data
