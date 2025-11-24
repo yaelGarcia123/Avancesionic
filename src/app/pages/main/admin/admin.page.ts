@@ -51,6 +51,17 @@ export class AdminPage implements OnInit {
     area: '',
     descripcion: '',
   };
+// ===== TICKETS POR PRIVADA =====
+ticketViewPrivada: 'privadas' | 'tickets' | 'newTicket' = 'privadas';
+
+privadasForTickets: any[] = [];
+selectedPrivada: any = null;
+
+ticketsByPrivada: any[] = [];
+newTicketPrivada = {
+  area: '',
+  descripcion: '',
+};
 
   // ===== Variables generales =====
   currentUid: string | null = null;
@@ -462,19 +473,24 @@ export class AdminPage implements OnInit {
     }
   }
 
-  setSection(section: string) {
-    this.selectedSection = section;
+ setSection(section: string) {
+  this.selectedSection = section;
 
-    if (section === 'messages') {
-      this.loadMessageUsers();
-    }
-
-    if (section === 'tickets') {
-      //Load all houses from allUsers.
-      this.ticketView = 'houses';
-      this.loadTicketHouses();
-    }
+  if (section === 'messages') {
+    this.loadMessageUsers();
   }
+
+  if (section === 'tickets') {
+    this.ticketView = 'houses';
+    this.loadTicketHouses();
+  }
+
+  if (section === 'ticketsPrivada') {
+    this.ticketViewPrivada = 'privadas';
+    this.loadPrivadasForTickets();
+  }
+}
+
 
   closeChat() {
     this.selectedChatUser = null;
@@ -518,7 +534,7 @@ export class AdminPage implements OnInit {
 
       const q = query(
         //Crea la consulta (query) a Firestore
-        collection(db, 'tickets'),
+        collection(db, 'tickets_houses'),
         where('houseId', '==', houseId),
         where('status', '==', this.ticketStatus)
       );
@@ -551,7 +567,7 @@ export class AdminPage implements OnInit {
     try {
       const db = getFirestore();
 
-      await addDoc(collection(db, 'tickets'), {
+      await addDoc(collection(db, 'tickets_houses'), {
         houseId: this.selectedHouseForTickets.id,
         area: this.newTicket.area,
         descripcion: this.newTicket.descripcion,
@@ -583,4 +599,82 @@ export class AdminPage implements OnInit {
     this.ticketStatus = status; //Cambia el estado del filtro
     this.loadTicketsByHouse(this.selectedHouseForTickets.id); //Cambia el estado del filtro
   }
+  loadPrivadasForTickets() {
+  const mapa = new Map<string, any>();
+
+  this.allUsers.forEach(user => {
+    user.houses.forEach(house => {
+      if (!mapa.has(house.fraccionamientoId)) {
+        mapa.set(house.fraccionamientoId, {
+          id: house.fraccionamientoId,
+          nombre: house.fraccionamiento,
+          totalHouses: 0,
+        });
+      }
+
+      mapa.get(house.fraccionamientoId).totalHouses++;
+    });
+  });
+
+  this.privadasForTickets = Array.from(mapa.values());
+}
+openPrivadaTickets(privada: any) {
+  this.selectedPrivada = privada;
+  this.ticketViewPrivada = 'tickets';
+  this.loadTicketsByPrivada(privada.id);
+}
+async loadTicketsByPrivada(fraccionamientoId: string) {
+  this.loadingTickets = true;
+
+  try {
+    const db = getFirestore();
+    const q = query(
+      collection(db, 'tickets_subdivisions'),
+      where('fraccionamientoId', '==', fraccionamientoId),
+      where('status', '==', this.ticketStatus)
+    );
+
+    const snap = await getDocs(q);
+    this.ticketsByPrivada = snap.docs.map(d => ({
+      id: d.id,
+      ...d.data(),
+    }));
+  } catch (e) {
+    console.error('Error cargando tickets por privada:', e);
+  }
+
+  this.loadingTickets = false;
+}
+async saveTicketPrivada() {
+  if (!this.selectedPrivada) return;
+
+  try {
+    const db = getFirestore();
+    await addDoc(collection(db, 'tickets_subdivisions'), {
+      fraccionamientoId: this.selectedPrivada.id,
+      fraccionamiento: this.selectedPrivada.nombre,
+      area: this.newTicketPrivada.area,
+      descripcion: this.newTicketPrivada.descripcion,
+      status: 'abierto',
+      createdAt: serverTimestamp(),
+      createdBy: this.currentUid,
+    });
+
+    this.utils.presentToast({
+      message: 'Ticket creado correctamente',
+      color: 'success',
+    });
+
+    this.ticketViewPrivada = 'tickets';
+    this.loadTicketsByPrivada(this.selectedPrivada.id);
+
+  } catch (e) {
+    console.error(e);
+    this.utils.presentToast({
+      message: 'Error al crear ticket',
+      color: 'danger',
+    });
+  }
+}
+
 }
