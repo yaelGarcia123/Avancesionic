@@ -8,11 +8,28 @@
 </ion-header>
 
 <ion-content class="ion-padding">
+
+  <!-- Número de Casa -->
   <ion-item>
     <ion-label position="stacked">Número de casa</ion-label>
     <ion-input [(ngModel)]="house.number"></ion-input>
   </ion-item>
 
+  <!-- Fraccionamiento -->
+  <ion-item>
+    <ion-label position="stacked">Fraccionamiento</ion-label>
+    <ion-select
+      [(ngModel)]="house.fraccionamientoId"
+      interface="popover"
+      placeholder="Selecciona un fraccionamiento"
+    >
+      <ion-select-option *ngFor="let f of fraccionamientos" [value]="f.id">
+        {{ f.nombre }}
+      </ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <!-- Estado -->
   <ion-item>
     <ion-label>Estado</ion-label>
     <ion-toggle [(ngModel)]="house.active" color="success"></ion-toggle>

@@ -30,6 +30,7 @@
             <div class="house-info">
               <h3>{{ place.number }}</h3>
               <p>Owner: {{ place.user?.name }}</p>
+               <p>Subdivision: {{ place.fraccionamiento }}</p>
             </div>
             <ion-badge *ngIf="place.active" color="success" class="status-badge">Active</ion-badge>
             <ion-badge *ngIf="!place.active" color="danger" class="status-badge">Inactive</ion-badge>

@@ -23,13 +23,12 @@
         </li>
 
         <li
-  [class.active]="selectedSection === 'tickets'"
-  (click)="setSection('tickets')"
->
-  <ion-icon name="receipt-outline"></ion-icon>
-  Tickets
-</li>
-
+          [class.active]="selectedSection === 'tickets'"
+          (click)="setSection('tickets')"
+        >
+          <ion-icon name="receipt-outline"></ion-icon>
+          Tickets por Usuario
+        </li>
       </ul>
     </div>
 
@@ -156,10 +155,13 @@
                       slot="start"
                       [color]="house.active ? 'success' : 'medium'"
                     ></ion-icon>
+
                     <ion-label>
                       <h3>{{ house.number }}</h3>
+                      <p>Fraccionamiento: {{ house.fraccionamiento }}</p>
                       <p>Estado: {{ house.active ? 'Activa' : 'Inactiva' }}</p>
                     </ion-label>
+
                     <ion-badge
                       [color]="house.active ? 'success' : 'medium'"
                       slot="end"
@@ -316,125 +318,127 @@
         </div>
       </div>
 
-<!-- 🟦 SECCIÓN: TICKETS -->
-<div *ngIf="selectedSection === 'tickets'" class="content-wrapper">
-  <h1 class="section-title">Tickets</h1>
+      <!-- 🟦 SECCIÓN: TICKETS -->
+      <div *ngIf="selectedSection === 'tickets'" class="content-wrapper">
+        <h1 class="section-title">Tickets</h1>
 
-  <!-- =======================
+        <!-- =======================
         PASO 1 — LISTA DE CASAS
      ======================= -->
-  <div *ngIf="ticketView === 'houses'">
-    <ion-list>
-      <ion-item
-        button
-        *ngFor="let h of housesForTickets"
-        (click)="openHouseTickets(h)"
-      >
-        <ion-icon name="home-outline" slot="start"></ion-icon>
-        <ion-label>
-          <h2>Casa {{ h.number }}</h2>
-          <p>Propietario: {{ h.owner }}</p>
-        </ion-label>
-        <ion-icon name="arrow-forward-circle-outline" slot="end"></ion-icon>
-      </ion-item>
-    </ion-list>
-  </div>
+        <div *ngIf="ticketView === 'houses'">
+          <ion-list>
+            <ion-item
+              button
+              *ngFor="let h of housesForTickets"
+              (click)="openHouseTickets(h)"
+            >
+              <ion-icon name="home-outline" slot="start"></ion-icon>
+              <ion-label>
+                <h2>Casa {{ h.number }}</h2>
+                <p>Propietario: {{ h.owner }}</p>
+              </ion-label>
+              <ion-icon
+                name="arrow-forward-circle-outline"
+                slot="end"
+              ></ion-icon>
+            </ion-item>
+          </ion-list>
+        </div>
 
-  <!-- =======================
+        <!-- =======================
         PASO 2 — LISTA TICKETS
      ======================= -->
-  <div *ngIf="ticketView === 'tickets'">
+        <div *ngIf="ticketView === 'tickets'">
+          <ion-button fill="clear" (click)="ticketView = 'houses'">
+            <ion-icon name="arrow-back"></ion-icon>
+            Regresar
+          </ion-button>
 
-    <ion-button fill="clear" (click)="ticketView = 'houses'">
-      <ion-icon name="arrow-back"></ion-icon>
-      Regresar
-    </ion-button>
+          <!-- FILTROS: ABIERTOS - CERRADOS -->
+          <div class="ticket-filters">
+            <button
+              class="filter-btn"
+              [class.active]="ticketStatus === 'abierto'"
+              (click)="changeTicketStatus('abierto')"
+            >
+              Abiertos
+            </button>
 
-    <!-- FILTROS: ABIERTOS - CERRADOS -->
-    <div class="ticket-filters">
-      <button
-        class="filter-btn"
-        [class.active]="ticketStatus === 'abierto'"
-        (click)="changeTicketStatus('abierto')"
-      >
-        Abiertos
-      </button>
+            <button
+              class="filter-btn"
+              [class.active]="ticketStatus === 'cerrado'"
+              (click)="changeTicketStatus('cerrado')"
+            >
+              Cerrados
+            </button>
+          </div>
 
-      <button
-        class="filter-btn"
-        [class.active]="ticketStatus === 'cerrado'"
-        (click)="changeTicketStatus('cerrado')"
-      >
-        Cerrados
-      </button>
-    </div>
+          <!-- BOTÓN NUEVO TICKET -->
+          <ion-button
+            color="success"
+            class="add-ticket-btn"
+            (click)="openNewTicket()"
+          >
+            <ion-icon name="add" slot="start"></ion-icon>
+            Nuevo Ticket
+          </ion-button>
 
-    <!-- BOTÓN NUEVO TICKET -->
-    <ion-button
-      color="success"
-      class="add-ticket-btn"
-      (click)="openNewTicket()"
-    >
-      <ion-icon name="add" slot="start"></ion-icon>
-      Nuevo Ticket
-    </ion-button>
+          <!-- LISTA DE TICKETS -->
+          <ion-list class="tickets-list">
+            <ion-item *ngFor="let t of tickets">
+              <ion-label>
+                <h2>{{ t.area }}</h2>
+                <p>{{ t.descripcion }}</p>
+                <small>{{ t.createdAt?.toDate() | date: 'medium' }}</small>
+              </ion-label>
 
-    <!-- LISTA DE TICKETS -->
-    <ion-list class="tickets-list">
-      <ion-item *ngFor="let t of tickets">
-        <ion-label>
-          <h2>{{ t.area }}</h2>
-          <p>{{ t.descripcion }}</p>
-          <small>{{ t.createdAt?.toDate() | date: 'medium' }}</small>
-        </ion-label>
+              <ion-badge
+                [color]="t.status === 'abierto' ? 'warning' : 'success'"
+              >
+                {{ t.status }}
+              </ion-badge>
+            </ion-item>
+          </ion-list>
+        </div>
 
-        <ion-badge
-          [color]="t.status === 'abierto' ? 'warning' : 'success'"
-        >
-          {{ t.status }}
-        </ion-badge>
-      </ion-item>
-    </ion-list>
-  </div>
-
-  <!-- =======================
+        <!-- =======================
         PASO 3 — NUEVO TICKET
      ======================= -->
-  <div *ngIf="ticketView === 'newTicket'" class="new-ticket-box">
-    <ion-button fill="clear" color="medium" (click)="ticketView = 'tickets'">
-      <ion-icon name="arrow-back" slot="start"></ion-icon>
-      Cancelar
-    </ion-button>
+        <div *ngIf="ticketView === 'newTicket'" class="new-ticket-box">
+          <ion-button
+            fill="clear"
+            color="medium"
+            (click)="ticketView = 'tickets'"
+          >
+            <ion-icon name="arrow-back" slot="start"></ion-icon>
+            Cancelar
+          </ion-button>
 
-    <ion-item class="ticket-input">
-      <ion-label>Área</ion-label>
-      <ion-select [(ngModel)]="newTicket.area">
-        <ion-select-option value="Técnica">Técnica</ion-select-option>
-        <ion-select-option value="Atencion-a-clientes">Atencion a clientes</ion-select-option>
-      </ion-select>
-    </ion-item>
+          <ion-item class="ticket-input">
+            <ion-label>Área</ion-label>
+            <ion-select [(ngModel)]="newTicket.area">
+              <ion-select-option value="Técnica">Técnica</ion-select-option>
+              <ion-select-option value="Atencion-a-clientes"
+                >Atencion a clientes</ion-select-option
+              >
+            </ion-select>
+          </ion-item>
 
-    <ion-item class="ticket-input">
-      <ion-label position="floating">Descripción</ion-label>
-      <ion-textarea [(ngModel)]="newTicket.descripcion"></ion-textarea>
-    </ion-item>
+          <ion-item class="ticket-input">
+            <ion-label position="floating">Descripción</ion-label>
+            <ion-textarea [(ngModel)]="newTicket.descripcion"></ion-textarea>
+          </ion-item>
 
-    <ion-button
-      expand="block"
-      color="success"
-      class="save-ticket-btn"
-      (click)="saveTicket()"
-    >
-      Guardar Ticket
-    </ion-button>
-  </div>
-</div>
-
-
-
-
-
-
+          <ion-button
+            expand="block"
+            color="success"
+            class="save-ticket-btn"
+            (click)="saveTicket()"
+          >
+            Guardar Ticket
+          </ion-button>
+        </div>
+      </div>
     </div>
   </div>
 </ion-content>

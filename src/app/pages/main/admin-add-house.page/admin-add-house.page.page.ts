@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
+import { getFirestore, collection, getDocs } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-admin-add-house.page',
@@ -8,50 +9,85 @@ import { ModalController } from '@ionic/angular';
   standalone: false,
 })
 export class AdminAddHousePagePage implements OnInit {
-
   @Input() allUsers: any[] = []; // receive users from AdminPage
   filteredUsers: any[] = []; // filtered list of users
   searchTerm: string = '';
 
-  newHouse = { // define an object for the new house
+  // 🔹 Lista de fraccionamientos que vienen de Firestore
+  fraccionamientos: any[] = [];
+
+  // 🔹 Objeto de la nueva casa
+  newHouse = {
     number: '',
+    fraccionamientoId: '',
+    fraccionamientoNombre: '',
     userId: '',
-    active: true
+    active: true,
   };
 
   constructor(private modalCtrl: ModalController) {}
 
-  ngOnInit() {
-    // initialize with all users
+  async ngOnInit() {
+    // inicializamos usuarios filtrados
     this.filteredUsers = [...this.allUsers];
+
+    // cargamos fraccionamientos desde Firestore
+    await this.loadFraccionamientos();
   }
-get formValid() {
+
+  // 🔹 Validación del formulario
+  get formValid() {
     return (
       this.newHouse.number.trim() !== '' &&
-      this.newHouse.userId.trim() !== ''
+      this.newHouse.userId.trim() !== '' &&
+      this.newHouse.fraccionamientoId.trim() !== ''
     );
   }
 
+  // 🔹 Cargar fraccionamientos desde Firestore
+  async loadFraccionamientos() {
+    const db = getFirestore();
+    const snap = await getDocs(collection(db, 'subdivisions'));
+
+    this.fraccionamientos = snap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+    }));
+  }
+
+  // 🔹 Cerrar modal sin datos
   dismiss() {
-    // close the modal without returning data
     this.modalCtrl.dismiss();
   }
 
+  // 🔹 Guardar y regresar la casa al AdminPage
   save() {
-    // validate that house number and user are selected
-    if (!this.newHouse.number || !this.newHouse.userId) {
+    if (!this.formValid) {
       return;
     }
-    // close the modal and return the new house data
+
+    const fracc = this.fraccionamientos.find(
+      (f) => f.id === this.newHouse.fraccionamientoId
+    );
+
+    this.newHouse.fraccionamientoNombre = fracc?.nombre || '';
+
     this.modalCtrl.dismiss(this.newHouse);
   }
 
+  // 🔹 Filtrar usuarios por nombre o email
   filterUsers() {
-    // filter users based on search term (name or email)
-    const term = this.searchTerm.toLowerCase();
-    this.filteredUsers = this.allUsers.filter(user =>
-      user.name.toLowerCase().includes(term) ||
-      user.email.toLowerCase().includes(term)
+    const term = this.searchTerm.toLowerCase().trim();
+
+    if (!term) {
+      this.filteredUsers = [...this.allUsers];
+      return;
+    }
+
+    this.filteredUsers = this.allUsers.filter(
+      (user) =>
+        user.name.toLowerCase().includes(term) ||
+        user.email.toLowerCase().includes(term)
     );
   }
 }

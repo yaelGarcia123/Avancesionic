@@ -33,27 +33,24 @@ import { AuthServ } from 'src/app/services/auth';
   templateUrl: './admin.page.html',
   styleUrls: ['./admin.page.scss'],
   standalone: false,
-  
 })
-
-
 export class AdminPage implements OnInit {
   @Input() backbutton!: string;
-// ===== TICKETS =====
-ticketStatus: 'abierto' | 'cerrado' = 'abierto';
+  // ===== TICKETS =====
+  ticketStatus: 'abierto' | 'cerrado' = 'abierto';
 
-ticketView: 'houses' | 'tickets' | 'newTicket' = 'houses';
+  ticketView: 'houses' | 'tickets' | 'newTicket' = 'houses';
 
-housesForTickets: any[] = [];
-selectedHouseForTickets: any = null;
+  housesForTickets: any[] = [];
+  selectedHouseForTickets: any = null;
 
-tickets: any[] = [];
-loadingTickets: boolean = false;
+  tickets: any[] = [];
+  loadingTickets: boolean = false;
 
-newTicket = {
-  area: '',
-  descripcion: ''
-};
+  newTicket = {
+    area: '',
+    descripcion: '',
+  };
 
   // ===== Variables generales =====
   currentUid: string | null = null;
@@ -124,6 +121,8 @@ newTicket = {
           return {
             id: house.id,
             number: house.number,
+            fraccionamiento: house.fraccionamiento || '',
+            fraccionamientoId: house.fraccionamientoId || '',
             active: house.active,
             createdAt: house.createdAt || new Date(),
           };
@@ -211,6 +210,8 @@ newTicket = {
         await this.firebaseSvc.updateDocument(`places/${updatedHouse.id}`, {
           number: updatedHouse.number,
           active: updatedHouse.active,
+          fraccionamiento: updatedHouse.fraccionamiento,
+          fraccionamientoId: updatedHouse.fraccionamientoId,
         });
         const user = this.allUsers.find((u) => u.id === userId);
         if (user) {
@@ -238,8 +239,11 @@ newTicket = {
         const newHouseRef = doc(collection(getFirestore(), 'places'));
         const houseId = newHouseRef.id;
 
+        // 🔹 YA INCLUYE FRACCIONAMIENTO
         const housePayload = {
           number: newHouse.number,
+          fraccionamientoId: newHouse.fraccionamientoId,
+          fraccionamiento: newHouse.fraccionamientoNombre,
           active: newHouse.active,
           createdAt: new Date(),
           user: {
@@ -251,10 +255,12 @@ newTicket = {
 
         await setDoc(newHouseRef, housePayload);
         await this.createOrUpdateHousePivot(newHouse.userId, houseId);
+
         this.utils.presentToast({
           message: 'Casa agregada correctamente',
           color: 'success',
         });
+
         await this.loadAllData();
       }
     });
@@ -457,18 +463,18 @@ newTicket = {
   }
 
   setSection(section: string) {
-  this.selectedSection = section;
+    this.selectedSection = section;
 
-  if (section === 'messages') {
-    this.loadMessageUsers();
+    if (section === 'messages') {
+      this.loadMessageUsers();
+    }
+
+    if (section === 'tickets') {
+      //Load all houses from allUsers.
+      this.ticketView = 'houses';
+      this.loadTicketHouses();
+    }
   }
-
-  if (section === 'tickets') {//Load all houses from allUsers.
-    this.ticketView = 'houses';
-    this.loadTicketHouses();
-  }
-}
-
 
   closeChat() {
     this.selectedChatUser = null;
@@ -479,97 +485,102 @@ newTicket = {
     this.router.navigate(['/profile']);
   }
 
-  loadTicketHouses() {//Load list of houses for tickets
-  this.housesForTickets = [];
+  loadTicketHouses() {
+    //Load list of houses for tickets
+    this.housesForTickets = [];
 
-  this.allUsers.forEach(user => {
-    user.houses.forEach(house => {
-      this.housesForTickets.push({
-        id: house.id,
-        number: house.number,
-        active: house.active,
-        owner: user.name
+    this.allUsers.forEach((user) => {
+      user.houses.forEach((house) => {
+        this.housesForTickets.push({
+          id: house.id,
+          number: house.number,
+          active: house.active,
+          owner: user.name,
+        });
       });
     });
-  });
-}
-openHouseTickets(house: any) {//Guarda qué casa seleccionaste
-//Cambia la vista a "tickets"
-//Carga los tickets de esa casa desde Firestore
-  this.selectedHouseForTickets = house;
-  this.ticketView = 'tickets';
-  this.loadTicketsByHouse(house.id);
-}
-async loadTicketsByHouse(houseId: string) {//Pide a Firestore:
+  }
+  openHouseTickets(house: any) {
+    //Guarda qué casa seleccionaste
+    //Cambia la vista a "tickets"
+    //Carga los tickets de esa casa desde Firestore
+    this.selectedHouseForTickets = house;
+    this.ticketView = 'tickets';
+    this.loadTicketsByHouse(house.id);
+  }
+  async loadTicketsByHouse(houseId: string) {
+    //Pide a Firestore:
 
-  this.loadingTickets = true;
+    this.loadingTickets = true;
 
-  try {
-    const db = getFirestore();
+    try {
+      const db = getFirestore();
 
-    const q = query(//Crea la consulta (query) a Firestore
-      collection(db, 'tickets'),
-      where('houseId', '==', houseId),
-      where('status', '==', this.ticketStatus)
-    );
+      const q = query(
+        //Crea la consulta (query) a Firestore
+        collection(db, 'tickets'),
+        where('houseId', '==', houseId),
+        where('status', '==', this.ticketStatus)
+      );
 
-    const snap = await getDocs(q);//Ejecuta la consulta
+      const snap = await getDocs(q); //Ejecuta la consulta
 
-    this.tickets = snap.docs.map(d => ({//Convierte los documentos a un arreglo usable
-      id: d.id,
-      ...d.data()
-    }));
-  } catch (e) {
-    console.error('Error cargando tickets:', e);
+      this.tickets = snap.docs.map((d) => ({
+        //Convierte los documentos a un arreglo usable
+        id: d.id,
+        ...d.data(),
+      }));
+    } catch (e) {
+      console.error('Error cargando tickets:', e);
+    }
+
+    this.loadingTickets = false;
   }
 
-  this.loadingTickets = false;
-}
-
-openNewTicket() {// Cambia la pantalla al formulario.
-  this.newTicket = {
-    area: '',
-    descripcion: ''
-  };
-  this.ticketView = 'newTicket';
-}
-async saveTicket() {
-  if (!this.selectedHouseForTickets) return;//Si no hay una casa seleccionada para el ticket, no hace nada
-
-  try {
-    const db = getFirestore();
-
-    await addDoc(collection(db, 'tickets'), {
-      houseId: this.selectedHouseForTickets.id,
-      area: this.newTicket.area,
-      descripcion: this.newTicket.descripcion,
-      status: 'abierto',
-      createdAt: serverTimestamp(),
-      createdBy: this.currentUid //Usuario que creó el ticket (admin actual)
-    });
-
-    this.utils.presentToast({
-      message: 'Ticket creado correctamente',
-      color: 'success',
-      duration: 2000
-    });
-
-    this.ticketView = 'tickets';//  Regresa a la vista de lista de tickets
-
-    this.loadTicketsByHouse(this.selectedHouseForTickets.id);//Recarga los tickets de la casa actual para ver el ticket nuevo
-
-  } catch (e) {
-    console.error(e);
-    this.utils.presentToast({
-      message: 'Error al crear ticket',
-      color: 'danger'
-    });
+  openNewTicket() {
+    // Cambia la pantalla al formulario.
+    this.newTicket = {
+      area: '',
+      descripcion: '',
+    };
+    this.ticketView = 'newTicket';
   }
-}
-changeTicketStatus(status: 'abierto' | 'cerrado') {//Cambia la variable ticketStatus
+  async saveTicket() {
+    if (!this.selectedHouseForTickets) return; //Si no hay una casa seleccionada para el ticket, no hace nada
 
-  this.ticketStatus = status;//Cambia el estado del filtro
-  this.loadTicketsByHouse(this.selectedHouseForTickets.id);//Cambia el estado del filtro
-}
+    try {
+      const db = getFirestore();
 
+      await addDoc(collection(db, 'tickets'), {
+        houseId: this.selectedHouseForTickets.id,
+        area: this.newTicket.area,
+        descripcion: this.newTicket.descripcion,
+        status: 'abierto',
+        createdAt: serverTimestamp(),
+        createdBy: this.currentUid, //Usuario que creó el ticket (admin actual)
+      });
+
+      this.utils.presentToast({
+        message: 'Ticket creado correctamente',
+        color: 'success',
+        duration: 2000,
+      });
+
+      this.ticketView = 'tickets'; //  Regresa a la vista de lista de tickets
+
+      this.loadTicketsByHouse(this.selectedHouseForTickets.id); //Recarga los tickets de la casa actual para ver el ticket nuevo
+    } catch (e) {
+      console.error(e);
+      this.utils.presentToast({
+        message: 'Error al crear ticket',
+        color: 'danger',
+      });
+    }
+  }
+  changeTicketStatus(status: 'abierto' | 'cerrado') {
+    //Cambia la variable ticketStatus
+
+    this.ticketStatus = status; //Cambia el estado del filtro
+    this.loadTicketsByHouse(this.selectedHouseForTickets.id); //Cambia el estado del filtro
+  }
 }

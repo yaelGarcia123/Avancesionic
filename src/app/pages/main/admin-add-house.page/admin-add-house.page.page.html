@@ -1,6 +1,6 @@
 <ion-header>
   <ion-toolbar color="primary">
-    <ion-title>Add House</ion-title>
+    <ion-title>Agregar Casa</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="dismiss()">
         <ion-icon slot="icon-only" name="close"></ion-icon>
@@ -10,50 +10,69 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-
-  <!-- House number input -->
+  <!-- Número de casa -->
   <ion-item>
-    <ion-label position="stacked">House Number</ion-label>
+    <ion-label position="stacked">Número de Casa</ion-label>
     <ion-input [(ngModel)]="newHouse.number"></ion-input>
   </ion-item>
 
-  <!-- User search bar -->
-  <ion-searchbar 
-    [(ngModel)]="searchTerm" 
-    (ionInput)="filterUsers()" 
-    placeholder="Search user..."
+  <!-- Fraccionamiento -->
+  <ion-item>
+    <ion-label position="stacked">Fraccionamiento</ion-label>
+    <ion-select
+      [(ngModel)]="newHouse.fraccionamientoId"
+      interface="popover"
+      placeholder="Selecciona un fraccionamiento"
+    >
+      <ion-select-option *ngFor="let f of fraccionamientos" [value]="f.id">
+        {{ f.nombre }}
+      </ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <!-- Buscador de usuario -->
+  <ion-searchbar
+    [(ngModel)]="searchTerm"
+    (ionInput)="filterUsers()"
+    placeholder="Buscar usuario..."
     debounce="300"
-    animated>
+    animated
+  >
   </ion-searchbar>
 
-  <!-- Optimized user list -->
+  <!-- Lista de usuarios -->
   <ion-list>
-    <ion-radio-group [(ngModel)]="newHouse.userId">  <!-- store selected user ID in newHouse.userId -->
-
+    <ion-radio-group [(ngModel)]="newHouse.userId">
       <ion-list-header>
-        <ion-label>Assign to User</ion-label>
+        <ion-label>Asignar a Usuario</ion-label>
       </ion-list-header>
 
-      <!-- Virtual scroll for performance -->
-      <ion-list style="max-height: 300px; overflow-y: auto;">
+      <div style="max-height: 300px; overflow-y: auto">
         <ion-item *ngFor="let user of filteredUsers">
-          <ion-label>{{ user.name }} ({{ user.email }})</ion-label>
+          <ion-label>
+            <h2>{{ user.name }}</h2>
+            <p>{{ user.email }}</p>
+          </ion-label>
           <ion-radio slot="start" [value]="user.id"></ion-radio>
         </ion-item>
-      </ion-list>
-
+      </div>
     </ion-radio-group>
   </ion-list>
 
-  <!-- Active/inactive toggle -->
+  <!-- Casa activa/inactiva -->
   <ion-item lines="none">
-    <ion-label>Active House</ion-label>
+    <ion-label>Casa activa</ion-label>
     <ion-toggle [(ngModel)]="newHouse.active"></ion-toggle>
   </ion-item>
 
-  <!-- Save button -->
-  <ion-button expand="block" color="success" (click)="save()" [disabled]="!formValid">
+  <!-- Botón Guardar -->
+  <ion-button
+    expand="block"
+    color="success"
+    (click)="save()"
+    [disabled]="!formValid"
+  >
     <ion-icon slot="start" name="checkmark"></ion-icon>
-    Save
+    Guardar
   </ion-button>
 </ion-content>

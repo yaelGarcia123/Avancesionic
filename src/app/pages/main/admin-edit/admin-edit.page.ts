@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { Place } from 'src/app/models/Places';
+import { getFirestore, collection, getDocs } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-admin-edit',
@@ -10,19 +11,38 @@ import { Place } from 'src/app/models/Places';
 })
 export class AdminEditPage implements OnInit {
 
-    @Input() house!: Place; // the house received from the admin page
+  @Input() house!: Place;
+
+  fraccionamientos: any[] = [];
 
   constructor(private modalCtrl: ModalController) {}
 
-  ngOnInit() {}
+  async ngOnInit() {
+    await this.loadFraccionamientos();
+  }
 
-  // Close the modal, optionally returning data
+  async loadFraccionamientos() {
+    const db = getFirestore();
+    const snap = await getDocs(collection(db, 'subdivisions'));
+
+    this.fraccionamientos = snap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+  }
+
   dismiss(data?: any) {
     this.modalCtrl.dismiss(data);
   }
 
-  // Save changes and return the updated house
   saveChanges() {
+
+    const fracc = this.fraccionamientos.find(
+      f => f.id === this.house.fraccionamientoId
+    );
+
+    this.house.fraccionamiento = fracc?.nombre || '';
+
     this.dismiss(this.house);
   }
 }
