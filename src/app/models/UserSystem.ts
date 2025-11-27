@@ -4,4 +4,6 @@ export interface UserSystem {
   password: string;
   name?: string;
   admin: boolean;
+  manager: boolean; // Agrega esta propiedad
+  uid?: string;
 }

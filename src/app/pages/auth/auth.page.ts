@@ -29,7 +29,6 @@ export class AuthPage implements OnInit {
     const loading = await this.utilsSvc.showLoading();
 
     try {
-      // Try to sign in with Firebase Authentication
       const res = await this.authServ.signIn(this.form.value as UserSystem);
       await this.getUserInfo(res.user.uid);
     } catch (error: any) {
@@ -51,11 +50,12 @@ export class AuthPage implements OnInit {
     const loading = await this.utilsSvc.showLoading();
 
     try {
-      let userData = await this.authServ.getCurrentUser();
-      const completeUser = { ...userData, uid }; // Creates a new object that copies all properties from userData and adds/ensures the uid property
+      let userData = await this.authServ.getUserData(uid); // Cambia esta línea
+      const completeUser = { ...userData, uid };
 
       this.utilsSvc.saveLocalStorage('users', completeUser);
 
+      // Lógica de redirección basada en roles
       if (completeUser.admin) {
         this.utilsSvc.routerLink('/main/admin');
         this.utilsSvc.presentToast({
@@ -64,6 +64,15 @@ export class AuthPage implements OnInit {
           color: 'success',
           position: 'middle',
           icon: 'shield-checkmark-outline',
+        });
+      } else if (completeUser.manager) {
+        this.utilsSvc.routerLink('/main/manager-tickets'); // Nueva ruta para manager
+        this.utilsSvc.presentToast({
+          message: `Welcome Manager ${completeUser['name']}`,
+          duration: 1500,
+          color: 'warning',
+          position: 'middle',
+          icon: 'briefcase-outline',
         });
       } else {
         this.utilsSvc.routerLink('/main/home');

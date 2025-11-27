@@ -39,7 +39,7 @@ export class AuthServ {
           if (this.user && userData) {
             this.userServ.currentUser.next(userData);
 
-            this.userServ.isAdmin();
+            this.userServ.redirectByRole();
                 this.utilsSvc.saveLocalStorage('users', userData);
 
           }
@@ -52,7 +52,9 @@ export class AuthServ {
       }
     });
   }
-
+ async getUserData(uid: string): Promise<UserSystem> {
+    return await this.firebase.getUserByUid(uid);
+  }
   // ==================== Authentication Status ====================
   // Returns true if a user is currently authenticated, false otherwise
   get authenticated(): boolean {

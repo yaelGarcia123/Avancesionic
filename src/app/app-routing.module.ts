@@ -60,6 +60,14 @@ const routes: Routes = [
       ),
   },
   {
+    path: 'manager-tickets',
+    canActivate: [AuthGuard],
+    loadChildren: () =>
+      import('./pages/main/manager-tickets/manager-tickets.module').then(
+        (m) => m.ManagerTicketsPageModule
+      ),
+  },
+  {
     path: '',
     redirectTo: 'auth',
     pathMatch: 'full',

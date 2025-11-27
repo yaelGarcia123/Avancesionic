@@ -11,13 +11,16 @@ export class UserServ {
   utilsSvc = inject(Utils);
   currentUser = new BehaviorSubject<UserSystem>(null as unknown as UserSystem);
 
-  async isAdmin() {
+  async redirectByRole() {
     const user = this.currentUser.value;
     console.log('User data:', user);
+    
     if (user?.admin) {
-      this.utilsSvc.routerLink('/admin');
+      this.utilsSvc.routerLink('/main/admin');
+    } else if (user?.manager) {
+      this.utilsSvc.routerLink('/main/manager-tickets');
     } else {
-      this.utilsSvc.routerLink('/home');
+      this.utilsSvc.routerLink('/main/home');
     }
   }
 }
