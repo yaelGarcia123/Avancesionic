@@ -1,4 +1,7 @@
-<app-headeradmin title="ADMINISTRADOR"></app-headeradmin>
+<app-headeradmin 
+  [title]="selectedPrivada ? 'ADMINISTRADOR - ' + selectedPrivada.nombre : 'ADMINISTRADOR'">
+</app-headeradmin>
+
 
 <ion-content>
   <div class="admin-layout">
@@ -448,82 +451,144 @@
         </div>
       </div>
 <!-- 🟩 SECCIÓN: TICKETS POR PRIVADA -->
+
+<!-- 🟩 SECCIÓN: TICKETS POR PRIVADA -->
 <div *ngIf="selectedSection === 'ticketsPrivada'" class="content-wrapper">
+  <h1 class="section-title">Tickets por Privada</h1>
 
-  <!-- === VISTA 1: LISTA DE PRIVADAS === -->
-  <div *ngIf="ticketViewPrivada === 'privadas'">
-    <h1 class="section-title">Tickets por Privada</h1>
-
-    <ion-list>
-      <ion-item
-        button
-        *ngFor="let p of privadasForTickets"
-        (click)="openPrivadaTickets(p)"
+  <!-- Selector de Privada -->
+  <div class="privada-selector">
+    <ion-item>
+      <ion-label>Seleccionar Privada</ion-label>
+      <ion-select 
+        [(ngModel)]="selectedPrivadaId" 
+        (ionChange)="onPrivadaChange()"
+        placeholder="Elige una privada"
       >
-        <ion-icon name="business-outline" slot="start"></ion-icon>
-        <ion-label>
-          <h2>{{ p.nombre }}</h2>
-          <p>{{ p.totalHouses }} casas</p>
-        </ion-label>
-        <ion-icon name="arrow-forward-circle-outline" slot="end"></ion-icon>
-      </ion-item>
-    </ion-list>
+        <ion-select-option 
+          *ngFor="let privada of privadasForTickets" 
+          [value]="privada.id"
+        >
+          {{ privada.nombre }} ({{ privada.totalHouses }} casas)
+        </ion-select-option>
+      </ion-select>
+    </ion-item>
   </div>
 
-  <!-- === VISTA 2: LISTA DE TICKETS POR PRIVADA === -->
-  <div *ngIf="ticketViewPrivada === 'tickets'">
-    <ion-button fill="clear" (click)="ticketViewPrivada = 'privadas'">
-      <ion-icon name="arrow-back"></ion-icon>
-      Regresar
-    </ion-button>
+  <!-- Mostrar información de la privada seleccionada -->
+  <div *ngIf="selectedPrivada" class="privada-info">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="business-outline"></ion-icon>
+          {{ selectedPrivada.nombre }}
+        </ion-card-title>
+        <ion-card-subtitle>
+          {{ selectedPrivada.totalHouses }} casas registradas
+        </ion-card-subtitle>
+      </ion-card-header>
+    </ion-card>
+  </div>
 
-    <h2>Privada: {{ selectedPrivada.nombre }}</h2>
-
+  <!-- Contenido principal cuando hay privada seleccionada -->
+  <div *ngIf="selectedPrivada" class="tickets-content">
     <!-- FILTROS -->
     <div class="ticket-filters">
+<button
+        class="filter-btn"
+        [class.active]="ticketStatusPrivada === 'todos'"
+        (click)="changeTicketStatusPrivada('todos')"
+      >
+        Todos
+      </button>
+
+
+
+
       <button
         class="filter-btn"
-        [class.active]="ticketStatus === 'abierto'"
-        (click)="changeTicketStatus('abierto')"
+        [class.active]="ticketStatusPrivada === 'abierto'"
+        (click)="changeTicketStatusPrivada('abierto')"
       >
         Abiertos
       </button>
 
       <button
         class="filter-btn"
-        [class.active]="ticketStatus === 'cerrado'"
-        (click)="changeTicketStatus('cerrado')"
+        [class.active]="ticketStatusPrivada === 'cerrado'"
+        (click)="changeTicketStatusPrivada('cerrado')"
       >
         Cerrados
       </button>
+
+      
     </div>
 
     <!-- BOTÓN NUEVO TICKET -->
-    <ion-button
-      color="success"
-      class="add-ticket-btn"
-      (click)="ticketViewPrivada = 'newTicket'"
-    >
-      <ion-icon name="add" slot="start"></ion-icon>
-      Nuevo Ticket
-    </ion-button>
+    
 
     <!-- LISTA DE TICKETS -->
-    <ion-list class="tickets-list">
-      <ion-item *ngFor="let t of ticketsByPrivada">
+    <div *ngIf="loadingTickets" class="loading">
+      <ion-spinner></ion-spinner>
+      <p>Cargando tickets...</p>
+    </div>
+
+    <ion-list class="tickets-list" *ngIf="!loadingTickets">
+      <ion-item 
+        *ngFor="let ticket of filteredTicketsByPrivada" 
+        class="ticket-item"
+      >
+        <ion-icon 
+          [name]="getTicketIcon(ticket.area)" 
+          slot="start"
+          [color]="ticket.status === 'abierto' ? 'warning' : 'success'"
+        ></ion-icon>
+        
         <ion-label>
-          <h2>{{ t.area }}</h2>
-          <p>{{ t.descripcion }}</p>
+          <h2>{{ ticket.area }}</h2>
+          <p>{{ ticket.descripcion }}</p>
+          <small>
+            Creado: {{ ticket.createdAt?.toDate() | date: 'medium' }}
+            <span *ngIf="ticket.createdByName">• Por: {{ ticket.createdByName }}</span>
+          </small>
         </ion-label>
 
-        <ion-badge [color]="t.status === 'abierto' ? 'warning' : 'success'">
-          {{ t.status }}
+        <ion-badge
+          [color]="ticket.status === 'abierto' ? 'warning' : 'success'"
+          slot="end"
+        >
+          {{ ticket.status }}
         </ion-badge>
       </ion-item>
     </ion-list>
+
+    <!-- Estado vacío -->
+    <div 
+      *ngIf="!loadingTickets && filteredTicketsByPrivada.length === 0" 
+      class="empty-state"
+    >
+      <ion-icon name="receipt-outline" size="large"></ion-icon>
+      <h3>No hay tickets</h3>
+      <p *ngIf="ticketStatusPrivada === 'todos'">
+        No se han creado tickets para esta privada
+      </p>
+      <p *ngIf="ticketStatusPrivada !== 'todos'">
+        No hay tickets {{ ticketStatusPrivada === 'abierto' ? 'abiertos' : 'cerrados' }}
+      </p>
+    </div>
   </div>
 
-  <!-- === VISTA 3: NUEVO TICKET === -->
+  <!-- Estado cuando no hay privada seleccionada -->
+  <div 
+    *ngIf="!selectedPrivada" 
+    class="empty-state"
+  >
+    <ion-icon name="business-outline" size="large"></ion-icon>
+    <h3>Selecciona una privada</h3>
+    <p>Elige una privada de la lista para ver los tickets</p>
+  </div>
+
+  <!-- VISTA NUEVO TICKET (igual que en Tickets por Casa) -->
   <div *ngIf="ticketViewPrivada === 'newTicket'" class="new-ticket-box">
     <ion-button fill="clear" color="medium" (click)="ticketViewPrivada = 'tickets'">
       <ion-icon name="arrow-back" slot="start"></ion-icon>
@@ -543,13 +608,9 @@
       <ion-textarea [(ngModel)]="newTicketPrivada.descripcion"></ion-textarea>
     </ion-item>
 
-    <ion-button expand="block" color="success" (click)="saveTicketPrivada()">
-      Crear Ticket
-    </ion-button>
+    
   </div>
-
 </div>
-
 
     </div>
   </div>

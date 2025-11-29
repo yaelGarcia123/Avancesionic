@@ -53,16 +53,16 @@ export class AdminPage implements OnInit {
   };
 // ===== TICKETS POR PRIVADA =====
 ticketViewPrivada: 'privadas' | 'tickets' | 'newTicket' = 'privadas';
-
-privadasForTickets: any[] = [];
+selectedPrivadaId: string = '';
 selectedPrivada: any = null;
-
+privadasForTickets: any[] = [];
 ticketsByPrivada: any[] = [];
+filteredTicketsByPrivada: any[] = [];
+ticketStatusPrivada: 'abierto' | 'cerrado' | 'todos' = 'todos';
 newTicketPrivada = {
   area: '',
   descripcion: '',
 };
-
   // ===== Variables generales =====
   currentUid: string | null = null;
   selectedSection: string = 'users';
@@ -486,7 +486,6 @@ newTicketPrivada = {
   }
 
   if (section === 'ticketsPrivada') {
-    this.ticketViewPrivada = 'privadas';
     this.loadPrivadasForTickets();
   }
 }
@@ -599,30 +598,90 @@ newTicketPrivada = {
     this.ticketStatus = status; //Cambia el estado del filtro
     this.loadTicketsByHouse(this.selectedHouseForTickets.id); //Cambia el estado del filtro
   }
-  loadPrivadasForTickets() {
+  
+
+loadPrivadasForTickets() {
   const mapa = new Map<string, any>();
 
   this.allUsers.forEach(user => {
     user.houses.forEach(house => {
-      if (!mapa.has(house.fraccionamientoId)) {
-        mapa.set(house.fraccionamientoId, {
-          id: house.fraccionamientoId,
-          nombre: house.fraccionamiento,
-          totalHouses: 0,
-        });
+      if (house.fraccionamientoId && house.fraccionamiento) {
+        if (!mapa.has(house.fraccionamientoId)) {
+          mapa.set(house.fraccionamientoId, {
+            id: house.fraccionamientoId,
+            nombre: house.fraccionamiento,
+            totalHouses: 0,
+          });
+        }
+        mapa.get(house.fraccionamientoId).totalHouses++;
       }
-
-      mapa.get(house.fraccionamientoId).totalHouses++;
     });
   });
 
   this.privadasForTickets = Array.from(mapa.values());
+  
+  // Si hay privadas, seleccionar la primera por defecto
+  if (this.privadasForTickets.length > 0 && !this.selectedPrivadaId) {
+    this.selectedPrivadaId = this.privadasForTickets[0].id;
+    this.onPrivadaChange();
+  }
 }
-openPrivadaTickets(privada: any) {
-  this.selectedPrivada = privada;
-  this.ticketViewPrivada = 'tickets';
-  this.loadTicketsByPrivada(privada.id);
+  onPrivadaChange() {
+  this.selectedPrivada = this.privadasForTickets.find(
+    p => p.id === this.selectedPrivadaId
+  );
+  
+  if (this.selectedPrivada) {
+    this.loadTicketsByPrivada(this.selectedPrivada.id);
+  } else {
+    this.ticketsByPrivada = [];
+    this.filteredTicketsByPrivada = [];
+  }
 }
+
+filterTicketsByPrivada() {
+  if (this.ticketStatusPrivada === 'todos') {
+    this.filteredTicketsByPrivada = [...this.ticketsByPrivada];
+  } else {
+    this.filteredTicketsByPrivada = this.ticketsByPrivada.filter(
+      ticket => ticket.status === this.ticketStatusPrivada
+    );
+  }
+}
+
+changeTicketStatusPrivada(status: 'abierto' | 'cerrado' | 'todos') {
+  this.ticketStatusPrivada = status;
+  this.filterTicketsByPrivada();
+}
+
+openNewTicketPrivada() {
+  if (!this.selectedPrivada) {
+    this.utils.presentToast({
+      message: 'Primero selecciona una privada',
+      color: 'warning',
+    });
+    return;
+  }
+  
+  this.newTicketPrivada = {
+    area: '',
+    descripcion: '',
+  };
+  this.ticketViewPrivada = 'newTicket';
+}
+
+getTicketIcon(area: string): string {
+  const icons: { [key: string]: string } = {
+    'Técnica': 'construct-outline',
+    'Atención a clientes': 'headset-outline',
+    'Mantenimiento': 'hammer-outline',
+    'Seguridad': 'shield-checkmark-outline',
+    'Otro': 'help-circle-outline'
+  };
+  return icons[area] || 'document-text-outline';
+}
+
+
 async loadTicketsByPrivada(fraccionamientoId: string) {
   this.loadingTickets = true;
 
@@ -630,8 +689,7 @@ async loadTicketsByPrivada(fraccionamientoId: string) {
     const db = getFirestore();
     const q = query(
       collection(db, 'tickets_subdivisions'),
-      where('fraccionamientoId', '==', fraccionamientoId),
-      where('status', '==', this.ticketStatus)
+      where('fraccionamientoId', '==', fraccionamientoId)
     );
 
     const snap = await getDocs(q);
@@ -639,42 +697,18 @@ async loadTicketsByPrivada(fraccionamientoId: string) {
       id: d.id,
       ...d.data(),
     }));
+
+    this.filterTicketsByPrivada();
   } catch (e) {
     console.error('Error cargando tickets por privada:', e);
+    this.utils.presentToast({
+      message: 'Error al cargar tickets',
+      color: 'danger',
+    });
   }
 
   this.loadingTickets = false;
 }
-async saveTicketPrivada() {
-  if (!this.selectedPrivada) return;
 
-  try {
-    const db = getFirestore();
-    await addDoc(collection(db, 'tickets_subdivisions'), {
-      fraccionamientoId: this.selectedPrivada.id,
-      fraccionamiento: this.selectedPrivada.nombre,
-      area: this.newTicketPrivada.area,
-      descripcion: this.newTicketPrivada.descripcion,
-      status: 'abierto',
-      createdAt: serverTimestamp(),
-      createdBy: this.currentUid,
-    });
-
-    this.utils.presentToast({
-      message: 'Ticket creado correctamente',
-      color: 'success',
-    });
-
-    this.ticketViewPrivada = 'tickets';
-    this.loadTicketsByPrivada(this.selectedPrivada.id);
-
-  } catch (e) {
-    console.error(e);
-    this.utils.presentToast({
-      message: 'Error al crear ticket',
-      color: 'danger',
-    });
-  }
-}
 
 }
