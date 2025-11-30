@@ -14,6 +14,7 @@ import {
   updateDoc,
   getFirestore,
   where,
+  orderBy,
 } from '@angular/fire/firestore';
 import { deleteUser as firebaseDeleteUser } from 'firebase/auth';
 
@@ -189,4 +190,26 @@ export class FirebaseServ {
       return null;
     }
   }
+
+  async getTicketsForManager(): Promise<any[]> {
+  try {
+    const db = getFirestore();
+    const ticketsRef = collection(db, 'tickets_houses');
+    const q = query(ticketsRef, orderBy('createdAt', 'desc'));
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data['createdAt']?.toDate?.() || new Date(),
+        closedAt: data['closedAt']?.toDate?.() || null
+      };
+    });
+  } catch (error) {
+    console.error('Error getting tickets:', error);
+    throw error;
+  }
+}
 }

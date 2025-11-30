@@ -1,0 +1,138 @@
+.stats-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1rem;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 120px;
+  text-align: center;
+  
+  ion-card-header {
+    padding: 1rem;
+  }
+  
+  ion-card-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1.5rem;
+  }
+}
+
+.stat-card.total {
+  --background: #e3f2fd;
+}
+
+.stat-card.abiertos {
+  --background: #fff3e0;
+}
+
+.stat-card.cerrados {
+  --background: #e8f5e8;
+}
+
+.loading, .empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--ion-color-medium);
+}
+
+.empty-state ion-button {
+  margin-top: 1rem;
+}
+
+.ticket-abierto {
+  --background: #fffaf0;
+  border-left: 4px solid var(--ion-color-warning);
+}
+
+.ticket-cerrado {
+  --background: #f0fff0;
+  border-left: 4px solid var(--ion-color-success);
+}
+
+.descripcion {
+  margin: 0.5rem 0;
+  line-height: 1.4;
+  color: var(--ion-color-dark);
+}
+
+.ticket-meta, .ticket-date {
+  margin: 0.25rem 0;
+}
+
+ion-item-sliding {
+  margin-bottom: 0.5rem;
+}
+
+ion-item {
+  --padding-start: 1rem;
+  --inner-padding-end: 1rem;
+  --border-radius: 8px;
+  margin: 0.5rem 1rem;
+}
+
+ion-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .stats-container {
+    flex-direction: column;
+  }
+  
+  .stat-card {
+    min-width: 100%;
+  }
+}
+
+/* Tarjeta */
+.filter-card {
+  border-radius: 14px;
+  --background: #ffffff;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+/* Contenedor del select */
+.modern-select-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* Label moderno */
+.modern-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #555;
+}
+
+/* Select moderno */
+.modern-select {
+  --border-radius: 12px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --placeholder-color: #808080;
+  --placeholder-opacity: 0.8;
+  --background: #f5f7fa;
+  border-radius: 12px !important;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.05);
+}
+
+/* Popover que aparece */
+ion-popover {
+  --width: 260px !important;
+}
+
+/* Opciones dentro del popover */
+ion-select-option {
+  font-size: 15px;
+}

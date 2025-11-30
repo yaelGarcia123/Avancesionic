@@ -7,6 +7,7 @@ import {
   where,
   getDocs,
   writeBatch,
+  getDoc,
 } from '@angular/fire/firestore';
 
 import { FirebaseServ } from 'src/app/services/firebase';
@@ -560,38 +561,45 @@ newTicketPrivada = {
     };
     this.ticketView = 'newTicket';
   }
-  async saveTicket() {
-    if (!this.selectedHouseForTickets) return; //Si no hay una casa seleccionada para el ticket, no hace nada
+ async saveTicket() {
+  if (!this.selectedHouseForTickets) return;
 
-    try {
-      const db = getFirestore();
+  try {
+    const db = getFirestore();
 
-      await addDoc(collection(db, 'tickets_houses'), {
-        houseId: this.selectedHouseForTickets.id,
-        area: this.newTicket.area,
-        descripcion: this.newTicket.descripcion,
-        status: 'abierto',
-        createdAt: serverTimestamp(),
-        createdBy: this.currentUid, //Usuario que creó el ticket (admin actual)
-      });
+    // 🔹 CORREGIR: Usar notación de corchetes
+    const houseDoc = await getDoc(doc(db, 'places', this.selectedHouseForTickets.id));
+    const houseData = houseDoc.data();
+    
+    await addDoc(collection(db, 'tickets_houses'), {
+      houseId: this.selectedHouseForTickets.id,
+      area: this.newTicket.area,
+      descripcion: this.newTicket.descripcion,
+      status: 'abierto',
+      fraccionamientoId: houseData?.['fraccionamientoId'] || '', // 🔹 CORREGIDO
+      fraccionamiento: houseData?.['fraccionamiento'] || '',    // 🔹 CORREGIDO
+      createdAt: serverTimestamp(),
+      createdBy: this.currentUid,
+    });
 
-      this.utils.presentToast({
-        message: 'Ticket creado correctamente',
-        color: 'success',
-        duration: 2000,
-      });
+    this.utils.presentToast({
+      message: 'Ticket creado correctamente',
+      color: 'success',
+      duration: 2000,
+    });
 
-      this.ticketView = 'tickets'; //  Regresa a la vista de lista de tickets
-
-      this.loadTicketsByHouse(this.selectedHouseForTickets.id); //Recarga los tickets de la casa actual para ver el ticket nuevo
-    } catch (e) {
-      console.error(e);
-      this.utils.presentToast({
-        message: 'Error al crear ticket',
-        color: 'danger',
-      });
-    }
+    this.ticketView = 'tickets';
+    this.loadTicketsByHouse(this.selectedHouseForTickets.id);
+  } catch (e) {
+    console.error(e);
+    this.utils.presentToast({
+      message: 'Error al crear ticket',
+      color: 'danger',
+    });
   }
+}
+
+
   changeTicketStatus(status: 'abierto' | 'cerrado') {
     //Cambia la variable ticketStatus
 
@@ -599,7 +607,7 @@ newTicketPrivada = {
     this.loadTicketsByHouse(this.selectedHouseForTickets.id); //Cambia el estado del filtro
   }
   
-
+// 🔹 CARGAR PRIVADAS PARA TICKETS (VERSIÓN SIMPLIFICADA)
 loadPrivadasForTickets() {
   const mapa = new Map<string, any>();
 
@@ -620,24 +628,26 @@ loadPrivadasForTickets() {
 
   this.privadasForTickets = Array.from(mapa.values());
   
-  // Si hay privadas, seleccionar la primera por defecto
   if (this.privadasForTickets.length > 0 && !this.selectedPrivadaId) {
     this.selectedPrivadaId = this.privadasForTickets[0].id;
     this.onPrivadaChange();
   }
 }
-  onPrivadaChange() {
+onPrivadaChange() {
   this.selectedPrivada = this.privadasForTickets.find(
     p => p.id === this.selectedPrivadaId
   );
   
   if (this.selectedPrivada) {
+    console.log(`🏠 Cargando tickets para privada: ${this.selectedPrivada.nombre} (ID: ${this.selectedPrivada.id})`);
     this.loadTicketsByPrivada(this.selectedPrivada.id);
+    this.ticketViewPrivada = 'tickets';
   } else {
     this.ticketsByPrivada = [];
     this.filteredTicketsByPrivada = [];
   }
 }
+ 
 
 filterTicketsByPrivada() {
   if (this.ticketStatusPrivada === 'todos') {
@@ -681,24 +691,56 @@ getTicketIcon(area: string): string {
   return icons[area] || 'document-text-outline';
 }
 
-
+// 🔹 CARGAR TICKETS POR PRIVADA (CORREGIDA)
+// 🔹 CARGAR TICKETS POR PRIVADA (CONSULTA DIRECTA CON FRACCIONAMIENTOID)
 async loadTicketsByPrivada(fraccionamientoId: string) {
   this.loadingTickets = true;
 
   try {
     const db = getFirestore();
+    
+    // 🔹 CONSULTA DIRECTA por fraccionamientoId
     const q = query(
-      collection(db, 'tickets_subdivisions'),
+      collection(db, 'tickets_houses'),
       where('fraccionamientoId', '==', fraccionamientoId)
     );
 
     const snap = await getDocs(q);
-    this.ticketsByPrivada = snap.docs.map(d => ({
-      id: d.id,
-      ...d.data(),
-    }));
+    
+    // 🔹 OBTENER INFORMACIÓN ADICIONAL DE CADA TICKET
+    this.ticketsByPrivada = await Promise.all(
+      snap.docs.map(async d => {
+        const ticketData = d.data();
+        
+        // 🔹 Buscar información de la casa y propietario
+        const houseInfo = await this.getHouseInfo(ticketData['houseId']);
+        
+        return {
+          id: d.id,
+          ...ticketData,
+          houseNumber: houseInfo?.number || 'N/A',
+          houseOwner: houseInfo?.owner || 'N/A',
+          // 🔹 Información adicional que ya tenemos del ticket
+          area: ticketData['area'],
+          descripcion: ticketData['descripcion'],
+          status: ticketData['status'],
+          createdAt: ticketData['createdAt'],
+          fraccionamiento: ticketData['fraccionamiento']
+        };
+      })
+    );
+
+    // 🔹 Ordenar por fecha de creación (más recientes primero)
+    this.ticketsByPrivada.sort((a, b) => {
+      const dateA = a.createdAt?.toDate?.() || new Date(0);
+      const dateB = b.createdAt?.toDate?.() || new Date(0);
+      return dateB.getTime() - dateA.getTime();
+    });
 
     this.filterTicketsByPrivada();
+    
+    console.log(`📊 Tickets cargados para privada ${fraccionamientoId}:`, this.ticketsByPrivada.length);
+    
   } catch (e) {
     console.error('Error cargando tickets por privada:', e);
     this.utils.presentToast({
@@ -709,6 +751,51 @@ async loadTicketsByPrivada(fraccionamientoId: string) {
 
   this.loadingTickets = false;
 }
+// 🔹 OBTENER INFORMACIÓN DE LA CASA (CORREGIDA)
+// 🔹 OBTENER INFORMACIÓN DE LA CASA (MEJORADA)
+async getHouseInfo(houseId: string): Promise<any> {
+  if (!houseId) return { number: 'N/A', owner: 'N/A' };
+  
+  try {
+    const db = getFirestore();
+    const houseDoc = await getDoc(doc(db, 'places', houseId));
+    
+    if (houseDoc.exists()) {
+      const houseData = houseDoc.data();
+      
+      // 🔹 Buscar el propietario de la casa en nuestros datos locales
+      let owner = 'N/A';
+      for (const user of this.allUsers) {
+        const userHouse = user.houses.find((h: any) => h.id === houseId);
+        if (userHouse) {
+          owner = user.name;
+          break;
+        }
+      }
+      
+      return {
+        number: houseData?.['number'] || 'N/A',
+        owner: owner
+      };
+    } else {
+      console.warn(`⚠️ Casa no encontrada: ${houseId}`);
+      return { number: 'Casa eliminada', owner: 'N/A' };
+    }
+  } catch (error) {
+    console.error('Error obteniendo información de casa:', error);
+    return { number: 'Error', owner: 'N/A' };
+  }
+}
+get totalPrivada() {
+  return this.ticketsByPrivada.length;
+}
 
+get abiertosPrivada() {
+  return this.ticketsByPrivada.filter(t => t.status === 'abierto').length;
+}
+
+get cerradosPrivada() {
+  return this.ticketsByPrivada.filter(t => t.status === 'cerrado').length;
+}
 
 }

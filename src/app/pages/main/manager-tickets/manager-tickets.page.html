@@ -1,13 +1,156 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>manager-tickets</ion-title>
-  </ion-toolbar>
+
+<ion-header>
+ <app-header title="Manager"></app-header>
+
 </ion-header>
 
+
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">manager-tickets</ion-title>
-    </ion-toolbar>
-  </ion-header>
+ 
+
+  <!-- Tarjetas de estadísticas -->
+  <div class="stats-container">
+    <ion-card class="stat-card total">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="receipt-outline"></ion-icon>
+          {{ totalTickets }}
+        </ion-card-title>
+        <ion-card-subtitle>Total Tickets</ion-card-subtitle>
+      </ion-card-header>
+    </ion-card>
+
+    <ion-card class="stat-card abiertos">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="time-outline"></ion-icon>
+          {{ abiertosCount }}
+        </ion-card-title>
+        <ion-card-subtitle>Abiertos</ion-card-subtitle>
+      </ion-card-header>
+    </ion-card>
+
+    <ion-card class="stat-card cerrados">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="checkmark-done-outline"></ion-icon>
+          {{ cerradosCount }}
+        </ion-card-title>
+        <ion-card-subtitle>Cerrados</ion-card-subtitle>
+      </ion-card-header>
+    </ion-card>
+  </div>
+
+  <!-- Filtros -->
+  
+<ion-card class="filter-card">
+  <ion-card-header>
+    <ion-card-title>Filtros</ion-card-title>
+  </ion-card-header>
+
+  <ion-card-content>
+    <div class="modern-select-container">
+      <label class="modern-label">Estado</label>
+
+      <ion-select
+        [(ngModel)]="filterStatus"
+        (ionChange)="onFilterChange()"
+        interface="popover"
+        class="modern-select"
+        placeholder="Seleccionar estado"
+      >
+        <ion-select-option value="todos">Todos</ion-select-option>
+        <ion-select-option value="abierto">Abiertos</ion-select-option>
+        <ion-select-option value="cerrado">Cerrados</ion-select-option>
+      </ion-select>
+    </div>
+  </ion-card-content>
+</ion-card>
+
+  <!-- Lista de tickets -->
+  <ion-refresher slot="fixed" (ionRefresh)="refreshTickets($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div *ngIf="loading" class="loading">
+    <ion-spinner></ion-spinner>
+    <p>Cargando tickets...</p>
+  </div>
+
+  <ion-list *ngIf="!loading">
+    <ion-item-sliding *ngFor="let ticket of filteredTickets">
+      <ion-item 
+        [class.ticket-abierto]="ticket.status === 'abierto'"
+        [class.ticket-cerrado]="ticket.status === 'cerrado'"
+      >
+        <ion-icon 
+          [name]="getTicketIcon(ticket.area)" 
+          slot="start"
+          [color]="getStatusColor(ticket.status)"
+        ></ion-icon>
+        
+        <ion-label>
+          <h2>{{ ticket.area }}</h2>
+          <p class="descripcion">{{ ticket.descripcion }}</p>
+          
+          <div class="ticket-meta">
+            <ion-text color="medium">
+              <small>
+                <strong>Casa ID:</strong> {{ ticket.houseId }} • 
+                <strong>Privada:</strong> {{ ticket.fraccionamiento }}
+              </small>
+            </ion-text>
+          </div>
+
+          <div class="ticket-date">
+            <ion-text color="medium">
+              <small>
+                <strong>Creado:</strong> {{ formatDate(ticket.createdAt) }}
+              </small>
+            </ion-text>
+          </div>
+
+          <div *ngIf="ticket.status === 'cerrado'" class="ticket-date">
+            <ion-text color="success">
+              <small>
+                <strong>Cerrado:</strong> {{ formatDate(ticket.closedAt) }}
+              </small>
+            </ion-text>
+          </div>
+        </ion-label>
+
+        <ion-badge 
+          [color]="getStatusColor(ticket.status)" 
+          slot="end"
+        >
+          {{ ticket.status }}
+        </ion-badge>
+      </ion-item>
+
+      <!-- Opción para cerrar ticket (solo si está abierto) -->
+      <ion-item-options side="end" *ngIf="ticket.status === 'abierto'">
+        <ion-item-option 
+          color="success" 
+          (click)="closeTicket(ticket)"
+        >
+          <ion-icon slot="icon-only" name="checkmark-circle"></ion-icon>
+          Cerrar
+        </ion-item-option>
+      </ion-item-options>
+    </ion-item-sliding>
+  </ion-list>
+
+  <!-- Estado vacío -->
+  <div 
+    *ngIf="!loading && filteredTickets.length === 0" 
+    class="empty-state"
+  >
+    <ion-icon name="receipt-outline" size="large"></ion-icon>
+    <h3>No hay tickets</h3>
+    <p>No se encontraron tickets con los filtros actuales</p>
+    <ion-button (click)="filterStatus = 'todos'; onFilterChange()">
+      <ion-icon name="refresh" slot="start"></ion-icon>
+      Mostrar todos
+    </ion-button>
+  </div>
 </ion-content>
