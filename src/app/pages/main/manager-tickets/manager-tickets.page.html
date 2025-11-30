@@ -130,7 +130,7 @@
       <!-- Opción para cerrar ticket (solo si está abierto) -->
       <ion-item-options side="end" *ngIf="ticket.status === 'abierto'">
         <ion-item-option 
-          color="success" 
+color="medium"
           (click)="closeTicket(ticket)"
         >
           <ion-icon slot="icon-only" name="checkmark-circle"></ion-icon>
